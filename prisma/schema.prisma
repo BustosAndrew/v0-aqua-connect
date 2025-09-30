@@ -1,0 +1,161 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Port {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+
+  ships              Ship[]
+  trips              Trip[]
+  coopIncomes        CoopIncome[]
+  realTimeMarketData RealTimeMarketData[]
+
+  @@map("ports")
+}
+
+model Ship {
+  id     Int    @id @default(autoincrement())
+  name   String
+  portId Int
+
+  port        Port         @relation(fields: [portId], references: [id])
+  crewMembers CrewMember[]
+  trips       Trip[]
+
+  @@map("ships")
+}
+
+model CrewMember {
+  id     Int    @id @default(autoincrement())
+  name   String
+  role   String @default("Crew")
+  shipId Int
+
+  ship Ship @relation(fields: [shipId], references: [id])
+
+  @@map("crew_members")
+}
+
+model FishSpecies {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+
+  trips                  Trip[]
+  catchLogs              CatchLog[]
+  realTimeMarketData     RealTimeMarketData[]
+  pricePredictions       PricePrediction[]
+  fishAvailability       FishAvailability[]
+  fishingHotspotForecasts FishingHotspotForecast[]
+
+  @@map("fish_species")
+}
+
+model Trip {
+  id           Int      @id @default(autoincrement())
+  shipId       Int
+  portId       Int
+  speciesId    Int
+  kgCaught     Float    @default(0)
+  date         DateTime @default(now())
+  incomeResult Float    @default(0)
+  locationX    Float
+  locationY    Float
+  departureTime DateTime?
+  returnTime    DateTime?
+  duration      Int? // Duration in days
+  status        String   @default("planned") // planned, in-progress, completed, delayed
+
+  ship    Ship        @relation(fields: [shipId], references: [id])
+  port    Port        @relation(fields: [portId], references: [id])
+  species FishSpecies @relation(fields: [speciesId], references: [id])
+
+  @@map("trips")
+}
+
+model CoopIncome {
+  id           Int      @id @default(autoincrement())
+  date         DateTime @default(now())
+  totalIncome  Float
+  portId       Int
+  portIncome   Float
+
+  port Port @relation(fields: [portId], references: [id])
+
+  @@map("coop_incomes")
+}
+
+model CatchLog {
+  id        Int      @id @default(autoincrement())
+  date      DateTime @default(now())
+  tripId    Int?
+  speciesId Int
+  totalKg   Float
+  vessel    String
+  pricePerKg Float
+  totalValue Float
+
+  trip    Trip?       @relation(fields: [tripId], references: [id])
+  species FishSpecies @relation(fields: [speciesId], references: [id])
+
+  @@map("catch_logs")
+}
+
+model RealTimeMarketData {
+  id         Int      @id @default(autoincrement())
+  portId     Int
+  speciesId  Int
+  pricePerKg Float
+  kg         Float    @default(0)
+  updatedAt  DateTime @default(now())
+
+  port    Port        @relation(fields: [portId], references: [id])
+  species FishSpecies @relation(fields: [speciesId], references: [id])
+
+  @@map("real_time_market_data")
+}
+
+model PricePrediction {
+  id         Int      @id @default(autoincrement())
+  date       DateTime @default(now())
+  speciesId  Int
+  pricePerKg Float
+  kg         Float    @default(0)
+
+  species FishSpecies @relation(fields: [speciesId], references: [id])
+
+  @@map("price_predictions")
+}
+
+model FishAvailability {
+  id                    Int     @id @default(autoincrement())
+  speciesId             Int
+  estimatedKgAvailable  Float   @default(0)
+  approximateLocationX  Float?
+  approximateLocationY  Float?
+
+  species FishSpecies @relation(fields: [speciesId], references: [id])
+
+  @@map("fish_availability")
+}
+
+model FishingHotspotForecast {
+  id                   Int      @id @default(autoincrement())
+  date                 DateTime @default(now())
+  locationX            Float
+  locationY            Float
+  speciesId            Int
+  expectedKgAvailable  Float    @default(0)
+
+  species FishSpecies @relation(fields: [speciesId], references: [id])
+
+  @@map("fishing_hotspot_forecasts")
+}
