@@ -5,7 +5,6 @@ import { Plus, Thermometer, Waves, Wind } from "lucide-react"
 import { WeatherCard } from "@/components/dashboard/weather-card"
 import { FishingHotspotMap } from "@/components/dashboard/fishing-hotspot-map"
 import { MarketPriceChart } from "@/components/dashboard/market-price-chart"
-import { CoordinationHub } from "@/components/dashboard/coordination-hub"
 import { AIPredictions } from "@/components/dashboard/ai-predictions"
 
 export default function HomePage() {
@@ -20,11 +19,11 @@ export default function HomePage() {
         </Button>
       }
     >
-      <div className="space-y-4">
+      <div className="space-y-3">
         {/* Weather and Ocean Data */}
         <section>
-          <h2 className="text-xl font-semibold text-white mb-3">Weather and Ocean Data</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <h2 className="text-xl font-semibold text-white mb-2">Weather and Ocean Data</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <WeatherCard title="Temperature" value="22°C" icon={<Thermometer className="h-5 w-5" />} />
             <WeatherCard title="Wave Height" value="1.5m" icon={<Waves className="h-5 w-5" />} />
             <WeatherCard title="Current Speed" value="0.8 m/s" icon={<Wind className="h-5 w-5" />} />
@@ -32,7 +31,7 @@ export default function HomePage() {
         </section>
 
         {/* Main Dashboard Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
           {/* Fishing Hotspot Forecasts */}
           <div className="lg:col-span-2">
             <Card className="bg-slate-900 border-slate-800 h-fit">
@@ -46,8 +45,7 @@ export default function HomePage() {
           </div>
 
           {/* Right Side Cards */}
-          <div className="space-y-4">
-            <CoordinationHub />
+          <div className="space-y-3">
             <AIPredictions />
           </div>
         </div>

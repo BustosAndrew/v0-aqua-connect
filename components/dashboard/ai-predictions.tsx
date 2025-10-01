@@ -36,9 +36,9 @@ export function AIPredictions() {
   const currentPrice = predictionData[0].price
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* Current Predictions Cards */}
-      <div className="grid grid-cols-1 gap-4">
+      <div className="grid grid-cols-1 gap-3">
         <Card className="bg-slate-800 border-slate-700">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
