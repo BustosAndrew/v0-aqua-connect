@@ -33,14 +33,14 @@ Key entities represent the fishing cooperative business:
 
 ### Component Organization
 
-```
+\`\`\`
 components/
 ├── ui/              # shadcn/ui base components
 ├── layout/          # MainLayout, Sidebar, Header
 ├── dashboard/       # Homepage dashboard widgets
 ├── [domain]/        # Feature-specific components (catches/, trips/, etc.)
 └── maps/           # MapboxFishingMap + weather overlays
-```
+\`\`\`
 
 ## Development Conventions
 
@@ -95,19 +95,19 @@ components/
 
 ### Commands
 
-```bash
+\`\`\`bash
 pnpm dev          # Development server
 pnpm build        # Production build
 pnpm lint         # ESLint (ignores during builds)
-```
+\`\`\`
 
 ### Database Operations
 
-```bash
+\`\`\`bash
 npx prisma generate    # Generate Prisma client
 npx prisma db push     # Push schema changes
 npx prisma studio      # Database GUI
-```
+\`\`\`
 
 ### Configuration Notes
 
