@@ -1,3 +1,6 @@
+"use client"
+
+import { useEffect, useState } from "react"
 import { Card } from "@/components/ui/card"
 
 interface DailyCatchDetailsContentProps {
@@ -19,41 +22,33 @@ interface ShipCatchData {
 }
 
 export function DailyCatchDetailsContent({ date }: DailyCatchDetailsContentProps) {
-  // Mock data - in real app, this would come from API/database
-  const shipCatchData: ShipCatchData[] = [
-    {
-      shipName: "El Sol",
-      crewCount: 4,
-      totalIncome: 3750.0,
-      catches: [
-        {
-          species: "Anchoveta",
-          kgCaught: 1500,
-          pricePerKg: 2.5,
-          subtotal: 3750.0,
-        },
-      ],
-    },
-    {
-      shipName: "La Perla",
-      crewCount: 3,
-      totalIncome: 2210.0,
-      catches: [
-        {
-          species: "Bonito",
-          kgCaught: 450,
-          pricePerKg: 3.8,
-          subtotal: 1710.0,
-        },
-        {
-          species: "Jurel",
-          kgCaught: 200,
-          pricePerKg: 2.5,
-          subtotal: 500.0,
-        },
-      ],
-    },
-  ]
+  const [shipCatchData, setShipCatchData] = useState<ShipCatchData[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetchCatchDetails()
+  }, [date])
+
+  const fetchCatchDetails = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch(`/api/catches/${date}`)
+      const data = await response.json()
+      setShipCatchData(data)
+    } catch (error) {
+      console.error("[v0] Error fetching catch details:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (loading) {
+    return <div className="text-center text-slate-400 py-8">Loading catch details...</div>
+  }
+
+  if (shipCatchData.length === 0) {
+    return <div className="text-center text-slate-400 py-8">No catch data available for this date.</div>
+  }
 
   return (
     <div className="space-y-6">

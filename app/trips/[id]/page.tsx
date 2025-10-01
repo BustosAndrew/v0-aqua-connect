@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { MainLayout } from "@/components/layout/main-layout"
 import { Button } from "@/components/ui/button"
 import { TripDetailsContent } from "@/components/trips/trip-details-content"
@@ -15,7 +15,7 @@ interface TripDetailsPageProps {
 
 interface TripData {
   id: string
-  status: "Active" | "Completed" | "Delayed"
+  status: "Active" | "Completed" | "Delayed" | "In Progress" | "On Time" | "Cancelled"
   date: string
   shipName: string
   captain: string
@@ -36,55 +36,154 @@ interface TripData {
 export default function TripDetailsPage({ params }: TripDetailsPageProps) {
   const { toast } = useToast()
   const [editDialogOpen, setEditDialogOpen] = useState(false)
+  const [tripData, setTripData] = useState<TripData | null>(null)
+  const [loading, setLoading] = useState(true)
 
-  const [tripData, setTripData] = useState<TripData>({
-    id: "#12345",
-    status: "Active",
-    date: "2024-07-15",
-    shipName: "El Pescador",
-    captain: "Ricardo",
-    crewMembers: ["Mateo", "Sofia"],
-    departureTime: "06:00",
-    returnTime: "18:00",
-    estimatedIncome: 2350,
-    targetSpecies: "anchoveta",
-    fishingZone: "paita",
-    duration: 3,
-    catchLog: [
-      { species: "Anchoveta", quantity: 150, pricePerKg: 8.5 },
-      { species: "Sardina", quantity: 75, pricePerKg: 12.0 },
-      { species: "Caballa", quantity: 45, pricePerKg: 15.2 },
-    ],
-  })
+  useEffect(() => {
+    fetchTripDetails()
+  }, [params.id])
+
+  const fetchTripDetails = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch(`/api/trips/${params.id}`)
+      const data = await response.json()
+
+      // Transform API data to component format
+      setTripData({
+        id: `#${data.id}`,
+        status: data.status,
+        date: data.trip_date,
+        shipName: data.ship_name,
+        captain: data.captain || "Unknown",
+        crewMembers: data.crew_members || [],
+        departureTime: data.departure_time,
+        returnTime: data.return_time,
+        estimatedIncome: Number(data.estimated_income) || 0,
+        targetSpecies: data.target_species,
+        fishingZone: data.fishing_zone,
+        duration: data.duration_days,
+        catchLog: [], // This would come from a separate API call if needed
+      })
+    } catch (error) {
+      console.error("[v0] Error fetching trip details:", error)
+      toast({
+        title: "Error",
+        description: "Failed to load trip details.",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleEditTrip = () => {
     setEditDialogOpen(true)
   }
 
-  const handleSaveTrip = (updatedTrip: TripData) => {
-    setTripData(updatedTrip)
-    toast({
-      title: "Trip Updated",
-      description: "Trip details have been successfully updated.",
-    })
+  const handleSaveTrip = async (updatedTrip: TripData) => {
+    try {
+      const response = await fetch(`/api/trips/${params.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ship_name: updatedTrip.shipName,
+          captain: updatedTrip.captain,
+          crew_members: updatedTrip.crewMembers,
+          departure_time: updatedTrip.departureTime,
+          return_time: updatedTrip.returnTime,
+          location: tripData?.fishingZone || "Unknown",
+          target_species: updatedTrip.targetSpecies,
+          fishing_zone: updatedTrip.fishingZone,
+          status: updatedTrip.status,
+          trip_date: updatedTrip.date,
+          estimated_income: updatedTrip.estimatedIncome,
+          duration_days: updatedTrip.duration,
+        }),
+      })
+
+      if (response.ok) {
+        setTripData(updatedTrip)
+        toast({
+          title: "Trip Updated",
+          description: "Trip details have been successfully updated.",
+        })
+      } else {
+        throw new Error("Failed to update trip")
+      }
+    } catch (error) {
+      console.error("[v0] Error updating trip:", error)
+      toast({
+        title: "Error",
+        description: "Failed to update trip details.",
+        variant: "destructive",
+      })
+    }
   }
 
-  const handleStatusChange = (newStatus: "Active" | "Completed" | "Delayed") => {
-    setTripData((prev) => ({ ...prev, status: newStatus }))
-    toast({
-      title: "Status Updated",
-      description: `Trip status has been changed to ${newStatus}.`,
-    })
+  const handleStatusChange = async (
+    newStatus: "Active" | "Completed" | "Delayed" | "In Progress" | "On Time" | "Cancelled",
+  ) => {
+    if (!tripData) return
+
+    try {
+      const response = await fetch(`/api/trips/${params.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ship_name: tripData.shipName,
+          captain: tripData.captain,
+          crew_members: tripData.crewMembers,
+          departure_time: tripData.departureTime,
+          return_time: tripData.returnTime,
+          location: tripData.fishingZone || "Unknown",
+          target_species: tripData.targetSpecies,
+          fishing_zone: tripData.fishingZone,
+          status: newStatus,
+          trip_date: tripData.date,
+          estimated_income: tripData.estimatedIncome,
+          duration_days: tripData.duration,
+        }),
+      })
+
+      if (response.ok) {
+        setTripData((prev) => (prev ? { ...prev, status: newStatus } : null))
+        toast({
+          title: "Status Updated",
+          description: `Trip status has been changed to ${newStatus}.`,
+        })
+      } else {
+        throw new Error("Failed to update status")
+      }
+    } catch (error) {
+      console.error("[v0] Error updating status:", error)
+      toast({
+        title: "Error",
+        description: "Failed to update trip status.",
+        variant: "destructive",
+      })
+    }
   }
 
   const handleMarkCompleted = () => {
-    if (tripData.status === "Completed") return
+    if (tripData?.status === "Completed") return
+    handleStatusChange("Completed")
+  }
 
-    setTripData((prev) => ({ ...prev, status: "Completed" }))
-    toast({
-      title: "Trip Completed",
-      description: "Trip has been marked as completed.",
-    })
+  if (loading) {
+    return (
+      <MainLayout title="Trip Details" subtitle="Loading...">
+        <div className="text-center text-slate-400 py-8">Loading trip details...</div>
+      </MainLayout>
+    )
+  }
+
+  if (!tripData) {
+    return (
+      <MainLayout title="Trip Details" subtitle="Not Found">
+        <div className="text-center text-slate-400 py-8">Trip not found.</div>
+      </MainLayout>
+    )
   }
 
   return (

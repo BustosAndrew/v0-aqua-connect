@@ -29,3 +29,62 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Failed to fetch trips" }, { status: 500 })
   }
 }
+
+export async function POST(request: Request) {
+  try {
+    const body = await request.json()
+    const {
+      ship_name,
+      captain,
+      crew_members,
+      departure_time,
+      return_time,
+      location,
+      target_species,
+      fishing_zone,
+      trip_date,
+      estimated_income,
+      duration_days,
+      image_url,
+    } = body
+
+    const result = await sql`
+      INSERT INTO trips (
+        ship_name,
+        captain,
+        crew_members,
+        departure_time,
+        return_time,
+        location,
+        target_species,
+        fishing_zone,
+        status,
+        trip_date,
+        estimated_income,
+        duration_days,
+        image_url
+      )
+      VALUES (
+        ${ship_name},
+        ${captain || null},
+        ${crew_members || null},
+        ${departure_time}::TIME,
+        ${return_time}::TIME,
+        ${location},
+        ${target_species},
+        ${fishing_zone || null},
+        'In Progress',
+        ${trip_date}::DATE,
+        ${estimated_income || null},
+        ${duration_days || null},
+        ${image_url || null}
+      )
+      RETURNING *
+    `
+
+    return NextResponse.json(result[0])
+  } catch (error) {
+    console.error("[v0] Error creating trip:", error)
+    return NextResponse.json({ error: "Failed to create trip" }, { status: 500 })
+  }
+}

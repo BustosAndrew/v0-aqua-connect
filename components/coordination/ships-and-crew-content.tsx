@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ShipsTable } from "./ships-table"
 import { CrewMembersTable } from "./crew-members-table"
@@ -9,72 +9,49 @@ interface Ship {
   id: number
   name: string
   port: string
+  crew_count: number
 }
 
 interface CrewMember {
   id: number
   name: string
-  ship: string
+  ship_name: string
   role: string
+  ship_id: number
 }
 
-const initialMockShips: Ship[] = [
-  {
-    id: 1,
-    name: "La Perla del Mar",
-    port: "Puerto Vallarta",
-  },
-  {
-    id: 2,
-    name: "El Veloz",
-    port: "Mazatlán",
-  },
-  {
-    id: 3,
-    name: "Estrella del Sur",
-    port: "Cabo San Lucas",
-  },
-]
-
-const initialMockCrewMembers: CrewMember[] = [
-  {
-    id: 1,
-    name: "Mateo Rodriguez",
-    ship: "La Perla del Mar",
-    role: "Captain",
-  },
-  {
-    id: 2,
-    name: "Sofia Ramirez",
-    ship: "La Perla del Mar",
-    role: "Engineer",
-  },
-  {
-    id: 3,
-    name: "Carlos Lopez",
-    ship: "El Veloz",
-    role: "Captain",
-  },
-  {
-    id: 4,
-    name: "Isabella Torres",
-    ship: "El Veloz",
-    role: "Deckhand",
-  },
-  {
-    id: 5,
-    name: "Diego Vargas",
-    ship: "Estrella del Sur",
-    role: "Navigator",
-  },
-]
-
 export function ShipsAndCrewContent() {
-  const [ships, setShips] = useState<Ship[]>(initialMockShips)
-  const [crewMembers, setCrewMembers] = useState<CrewMember[]>(initialMockCrewMembers)
+  const [ships, setShips] = useState<Ship[]>([])
+  const [crewMembers, setCrewMembers] = useState<CrewMember[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetchData()
+  }, [])
+
+  const fetchData = async () => {
+    try {
+      setLoading(true)
+      const [shipsResponse, crewResponse] = await Promise.all([fetch("/api/ships"), fetch("/api/crew-members")])
+
+      const shipsData = await shipsResponse.json()
+      const crewData = await crewResponse.json()
+
+      setShips(shipsData)
+      setCrewMembers(crewData)
+    } catch (error) {
+      console.error("[v0] Error fetching ships and crew:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const getCrewCountForShip = (shipName: string): number => {
-    return crewMembers.filter((member) => member.ship === shipName).length
+    return crewMembers.filter((member) => member.ship_name === shipName).length
+  }
+
+  if (loading) {
+    return <div className="text-center text-slate-400 py-8">Loading ships and crew...</div>
   }
 
   return (
