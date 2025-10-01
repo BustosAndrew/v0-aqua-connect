@@ -49,44 +49,45 @@ model FishSpecies {
   id   Int    @id @default(autoincrement())
   name String @unique
 
-  trips                  Trip[]
-  catchLogs              CatchLog[]
-  realTimeMarketData     RealTimeMarketData[]
-  pricePredictions       PricePrediction[]
-  fishAvailability       FishAvailability[]
+  trips                   Trip[]
+  catchLogs               CatchLog[]
+  realTimeMarketData      RealTimeMarketData[]
+  pricePredictions        PricePrediction[]
+  fishAvailability        FishAvailability[]
   fishingHotspotForecasts FishingHotspotForecast[]
 
   @@map("fish_species")
 }
 
 model Trip {
-  id           Int      @id @default(autoincrement())
-  shipId       Int
-  portId       Int
-  speciesId    Int
-  kgCaught     Float    @default(0)
-  date         DateTime @default(now())
-  incomeResult Float    @default(0)
-  locationX    Float
-  locationY    Float
+  id            Int       @id @default(autoincrement())
+  shipId        Int
+  portId        Int
+  speciesId     Int
+  kgCaught      Float     @default(0)
+  date          DateTime  @default(now())
+  incomeResult  Float     @default(0)
+  locationX     Float
+  locationY     Float
   departureTime DateTime?
   returnTime    DateTime?
   duration      Int? // Duration in days
-  status        String   @default("planned") // planned, in-progress, completed, delayed
+  status        String    @default("planned") // planned, in-progress, completed, delayed
 
-  ship    Ship        @relation(fields: [shipId], references: [id])
-  port    Port        @relation(fields: [portId], references: [id])
-  species FishSpecies @relation(fields: [speciesId], references: [id])
+  ship     Ship        @relation(fields: [shipId], references: [id])
+  port     Port        @relation(fields: [portId], references: [id])
+  species  FishSpecies @relation(fields: [speciesId], references: [id])
+  CatchLog CatchLog[]
 
   @@map("trips")
 }
 
 model CoopIncome {
-  id           Int      @id @default(autoincrement())
-  date         DateTime @default(now())
-  totalIncome  Float
-  portId       Int
-  portIncome   Float
+  id          Int      @id @default(autoincrement())
+  date        DateTime @default(now())
+  totalIncome Float
+  portId      Int
+  portIncome  Float
 
   port Port @relation(fields: [portId], references: [id])
 
@@ -94,12 +95,12 @@ model CoopIncome {
 }
 
 model CatchLog {
-  id        Int      @id @default(autoincrement())
-  date      DateTime @default(now())
-  tripId    Int?
-  speciesId Int
-  totalKg   Float
-  vessel    String
+  id         Int      @id @default(autoincrement())
+  date       DateTime @default(now())
+  tripId     Int?
+  speciesId  Int
+  totalKg    Float
+  vessel     String
   pricePerKg Float
   totalValue Float
 
@@ -136,11 +137,11 @@ model PricePrediction {
 }
 
 model FishAvailability {
-  id                    Int     @id @default(autoincrement())
-  speciesId             Int
-  estimatedKgAvailable  Float   @default(0)
-  approximateLocationX  Float?
-  approximateLocationY  Float?
+  id                   Int    @id @default(autoincrement())
+  speciesId            Int
+  estimatedKgAvailable Float  @default(0)
+  approximateLocationX Float?
+  approximateLocationY Float?
 
   species FishSpecies @relation(fields: [speciesId], references: [id])
 
@@ -148,12 +149,12 @@ model FishAvailability {
 }
 
 model FishingHotspotForecast {
-  id                   Int      @id @default(autoincrement())
-  date                 DateTime @default(now())
-  locationX            Float
-  locationY            Float
-  speciesId            Int
-  expectedKgAvailable  Float    @default(0)
+  id                  Int      @id @default(autoincrement())
+  date                DateTime @default(now())
+  locationX           Float
+  locationY           Float
+  speciesId           Int
+  expectedKgAvailable Float    @default(0)
 
   species FishSpecies @relation(fields: [speciesId], references: [id])
 
