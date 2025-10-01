@@ -1,44 +1,47 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { TripCard } from "./trip-card"
 
-const mockTrips = [
-  {
-    id: 1,
-    shipName: "Esperanza",
-    imageUrl: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/screen-Hsb7dUftmGoYy0BskOedC7r3Aoaklu.png",
-    departure: "6:00 AM",
-    return: "4:00 PM",
-    location: "Máncora",
-    target: "Tuna",
-    status: "On Time" as const,
-  },
-  {
-    id: 2,
-    shipName: "Mar Azul",
-    imageUrl: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/screen-Hsb7dUftmGoYy0BskOedC7r3Aoaklu.png",
-    departure: "7:30 AM",
-    return: "5:30 PM",
-    location: "Cabo Blanco",
-    target: "Mackerel",
-    status: "Delayed" as const,
-  },
-  {
-    id: 3,
-    shipName: "Nuevo Amanecer",
-    imageUrl: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/screen-Hsb7dUftmGoYy0BskOedC7r3Aoaklu.png",
-    departure: "8:00 AM",
-    return: "6:00 PM",
-    location: "El Ñuro",
-    target: "Mahi-mahi",
-    status: "In Progress" as const,
-  },
-]
+interface Trip {
+  id: number
+  ship_name: string
+  image_url: string
+  departure: string
+  return: string
+  location: string
+  target: string
+  status: "On Time" | "Delayed" | "In Progress" | "Completed" | "Cancelled"
+}
 
 export function TripsList() {
+  const [trips, setTrips] = useState<Trip[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetchTrips()
+  }, [])
+
+  const fetchTrips = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch("/api/trips")
+      const data = await response.json()
+      setTrips(data)
+    } catch (error) {
+      console.error("[v0] Error fetching trips:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (loading) {
+    return <div className="text-center text-slate-400 py-8">Loading trips...</div>
+  }
+
   return (
     <div className="space-y-6">
-      {mockTrips.map((trip) => (
+      {trips.map((trip) => (
         <TripCard key={trip.id} trip={trip} />
       ))}
     </div>

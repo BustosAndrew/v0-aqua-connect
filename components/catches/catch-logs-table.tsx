@@ -1,96 +1,46 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Search } from "lucide-react"
 import Link from "next/link"
 
-const mockCatchLogs = [
-  {
-    id: 1,
-    date: "2024-07-26",
-    vessel: "El Sol",
-    species: "Anchoveta",
-    totalKg: 1500,
-    pricePerKg: 2.5,
-    totalValue: 3750,
-  },
-  {
-    id: 2,
-    date: "2024-07-25",
-    vessel: "La Luna",
-    species: "Mackerel",
-    totalKg: 800,
-    pricePerKg: 3.0,
-    totalValue: 2400,
-  },
-  {
-    id: 3,
-    date: "2024-07-24",
-    vessel: "El Sol",
-    species: "Sardine",
-    totalKg: 1200,
-    pricePerKg: 2.0,
-    totalValue: 2400,
-  },
-  {
-    id: 4,
-    date: "2024-07-23",
-    vessel: "La Luna",
-    species: "Tuna",
-    totalKg: 500,
-    pricePerKg: 5.0,
-    totalValue: 2500,
-  },
-  {
-    id: 5,
-    date: "2024-07-22",
-    vessel: "El Sol",
-    species: "Anchoveta",
-    totalKg: 1800,
-    pricePerKg: 2.5,
-    totalValue: 4500,
-  },
-  {
-    id: 6,
-    date: "2024-07-21",
-    vessel: "La Luna",
-    species: "Mackerel",
-    totalKg: 900,
-    pricePerKg: 3.0,
-    totalValue: 2700,
-  },
-  {
-    id: 7,
-    date: "2024-07-20",
-    vessel: "El Sol",
-    species: "Sardine",
-    totalKg: 1100,
-    pricePerKg: 2.0,
-    totalValue: 2200,
-  },
-  {
-    id: 8,
-    date: "2024-07-19",
-    vessel: "La Luna",
-    species: "Tuna",
-    totalKg: 600,
-    pricePerKg: 5.0,
-    totalValue: 3000,
-  },
-]
+interface CatchLog {
+  id: number
+  date: string
+  vessel: string
+  species: string
+  total_kg: number
+  price_per_kg: number
+  total_value: number
+}
 
 export function CatchLogsTable() {
   const [searchQuery, setSearchQuery] = useState("")
+  const [catchLogs, setCatchLogs] = useState<CatchLog[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const filteredLogs = mockCatchLogs.filter(
-    (log) =>
-      log.vessel.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      log.species.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      log.date.includes(searchQuery),
-  )
+  useEffect(() => {
+    fetchCatchLogs()
+  }, [searchQuery])
+
+  const fetchCatchLogs = async () => {
+    try {
+      setLoading(true)
+      const params = new URLSearchParams()
+      if (searchQuery) params.append("search", searchQuery)
+
+      const response = await fetch(`/api/catches?${params}`)
+      const data = await response.json()
+      setCatchLogs(data)
+    } catch (error) {
+      console.error("[v0] Error fetching catch logs:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -108,40 +58,44 @@ export function CatchLogsTable() {
       {/* Table */}
       <Card className="bg-slate-900 border-slate-800">
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-slate-800">
-                  <th className="text-left p-4 text-sm font-medium text-slate-400">Date</th>
-                  <th className="text-left p-4 text-sm font-medium text-slate-400">Vessel</th>
-                  <th className="text-left p-4 text-sm font-medium text-slate-400">Species</th>
-                  <th className="text-left p-4 text-sm font-medium text-slate-400">Total kg</th>
-                  <th className="text-left p-4 text-sm font-medium text-slate-400">Price/kg</th>
-                  <th className="text-left p-4 text-sm font-medium text-slate-400">Total Value</th>
-                  <th className="text-left p-4 text-sm font-medium text-slate-400">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredLogs.map((log) => (
-                  <tr key={log.id} className="border-b border-slate-800 hover:bg-slate-800/50">
-                    <td className="p-4 text-white">{log.date}</td>
-                    <td className="p-4 text-white">{log.vessel}</td>
-                    <td className="p-4 text-white">{log.species}</td>
-                    <td className="p-4 text-white">{log.totalKg.toLocaleString()}</td>
-                    <td className="p-4 text-white">S/ {log.pricePerKg.toFixed(2)}</td>
-                    <td className="p-4 text-white">S/ {log.totalValue.toLocaleString()}</td>
-                    <td className="p-4">
-                      <Link href={`/catches/${log.date}`}>
-                        <Button variant="link" className="text-blue-400 hover:text-blue-300 p-0">
-                          View
-                        </Button>
-                      </Link>
-                    </td>
+          {loading ? (
+            <div className="p-8 text-center text-slate-400">Loading catch logs...</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-slate-800">
+                    <th className="text-left p-4 text-sm font-medium text-slate-400">Date</th>
+                    <th className="text-left p-4 text-sm font-medium text-slate-400">Vessel</th>
+                    <th className="text-left p-4 text-sm font-medium text-slate-400">Species</th>
+                    <th className="text-left p-4 text-sm font-medium text-slate-400">Total kg</th>
+                    <th className="text-left p-4 text-sm font-medium text-slate-400">Price/kg</th>
+                    <th className="text-left p-4 text-sm font-medium text-slate-400">Total Value</th>
+                    <th className="text-left p-4 text-sm font-medium text-slate-400">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {catchLogs.map((log) => (
+                    <tr key={log.id} className="border-b border-slate-800 hover:bg-slate-800/50">
+                      <td className="p-4 text-white">{log.date}</td>
+                      <td className="p-4 text-white">{log.vessel}</td>
+                      <td className="p-4 text-white">{log.species}</td>
+                      <td className="p-4 text-white">{Number(log.total_kg).toLocaleString()}</td>
+                      <td className="p-4 text-white">S/ {Number(log.price_per_kg).toFixed(2)}</td>
+                      <td className="p-4 text-white">S/ {Number(log.total_value).toLocaleString()}</td>
+                      <td className="p-4">
+                        <Link href={`/catches/${log.date}`}>
+                          <Button variant="link" className="text-blue-400 hover:text-blue-300 p-0">
+                            View
+                          </Button>
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </CardContent>
       </Card>
 

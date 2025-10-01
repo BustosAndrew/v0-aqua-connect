@@ -3,5 +3,5 @@
 import { MapboxFishingMap } from "@/components/maps/mapbox-fishing-map"
 
 export function FishingHotspotMap() {
-  return <MapboxFishingMap showWeather={true} className="h-96" />
+  return <MapboxFishingMap showWeather={true} className="h-[600px]" />
 }

@@ -31,14 +31,14 @@ export default function HomePage() {
         </section>
 
         {/* Main Dashboard Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 lg:items-start">
           {/* Fishing Hotspot Forecasts */}
           <div className="lg:col-span-2">
-            <Card className="bg-slate-900 border-slate-800 h-fit">
+            <Card className="bg-slate-900 border-slate-800 h-full">
               <CardHeader className="pb-3">
                 <CardTitle className="text-white">Fishing Hotspot Forecasts</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="h-[calc(100%-4rem)]">
                 <FishingHotspotMap />
               </CardContent>
             </Card>
