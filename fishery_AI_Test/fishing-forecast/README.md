@@ -12,22 +12,22 @@ A minimal, hackathon-friendly system that predicts **weekly fishing hotspots** f
 
 ## Quickstart (with synthetic data)
 1) Create a virtual environment and install requirements:
-```bash
+\`\`\`bash
 python -m venv .venv
 source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-```
+\`\`\`
 
 2) Generate synthetic data and train:
-```bash
+\`\`\`bash
 python src/data_gen.py      # creates weekly features + labels
 python src/train.py         # trains the XGBoost model
-```
+\`\`\`
 
 3) Run the demo app:
-```bash
+\`\`\`bash
 streamlit run app/App.py
-```
+\`\`\`
 
 4) In the UI, pick a **port** and an **ISO week** (e.g., `2024-W30`).
 
@@ -41,7 +41,7 @@ streamlit run app/App.py
 - Re-run `python src/train.py` to train on real labels.
 
 ## Repo layout
-```
+\`\`\`
 /data
   /raw           # put raw rasters or BI extracts here
   /processed     # weekly features parquet and labels
@@ -49,7 +49,7 @@ streamlit run app/App.py
 /app             # streamlit demo
 /src             # source code
 /notebooks       # for EDA
-```
+\`\`\`
 
 ## Notes
 - This is an **MVP scaffold** geared for a 1–1.5 week hackathon. Extend with currents, SSH, fronts, bathymetry, and proper CPUE later.
