@@ -24,6 +24,19 @@ export function CatchLogsTable() {
   const [loading, setLoading] = useState(true)
   const [isAddCatchDialogOpen, setIsAddCatchDialogOpen] = useState(false)
 
+  const formatDate = (dateString: string) => {
+    try {
+      const date = new Date(dateString)
+      return date.toLocaleDateString(undefined, {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      })
+    } catch {
+      return dateString
+    }
+  }
+
   useEffect(() => {
     fetchCatchLogs()
   }, [searchQuery])
@@ -89,7 +102,7 @@ export function CatchLogsTable() {
                   <tbody>
                     {catchLogs.map((log) => (
                       <tr key={log.id} className="border-b border-slate-800 hover:bg-slate-800/50">
-                        <td className="p-4 text-white">{log.date}</td>
+                        <td className="p-4 text-white">{formatDate(log.date)}</td>
                         <td className="p-4 text-white">{log.vessel}</td>
                         <td className="p-4 text-white">{log.species}</td>
                         <td className="p-4 text-white">{Number(log.total_kg).toLocaleString()}</td>
