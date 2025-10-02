@@ -54,6 +54,7 @@ export function MapboxFishingMap({
   const [dragStart, setDragStart] = useState<{ x: number; y: number; center: [number, number] } | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [aiHotspots, setAiHotspots] = useState<FishingHotspot[]>([])
+  const [error, setError] = useState<string | null>(null)
   const mapRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -63,12 +64,20 @@ export function MapboxFishingMap({
         const response = await fetch(
           `/api/map-image?lng=${center[0]}&lat=${center[1]}&zoom=${zoom}&width=800&height=600`,
         )
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch map image: ${response.statusText}`)
+        }
+
         const data = await response.json()
         if (data.url) {
           setMapImageUrl(data.url)
+          setError(null)
         }
       } catch (error) {
-        console.error("Failed to fetch map image:", error)
+        console.error("[v0] Failed to fetch map image:", error)
+        setError("Failed to load map image")
+        setMapImageUrl("/placeholder.svg?height=600&width=800")
       } finally {
         setIsLoading(false)
       }
@@ -80,22 +89,27 @@ export function MapboxFishingMap({
   useEffect(() => {
     const fetchHotspots = async () => {
       try {
-        const response = await fetch("/api/predictions/hotspots?week=2024-W28")
-        const data = await response.json()
+        const response = await fetch("/predictions/2024-W28.geojson")
 
-        if (data.data && data.data.features) {
-          // Convert GeoJSON features to hotspot format
-          const hotspots: FishingHotspot[] = data.data.features
-            .filter((feature: any) => feature.properties.p > 0.5) // Only show high probability areas
+        if (!response.ok) {
+          throw new Error(`Failed to fetch hotspots: ${response.statusText}`)
+        }
+
+        const geojsonData = await response.json()
+
+        if (geojsonData && geojsonData.features) {
+          const hotspots: FishingHotspot[] = geojsonData.features
+            .filter((feature: any) => feature.properties.p > 0.5)
             .map((feature: any, index: number) => ({
               id: `ai-hotspot-${index}`,
               name: `Hotspot ${index + 1}`,
               coordinates: feature.geometry.coordinates as [number, number],
               type: feature.properties.p > 0.8 ? "high" : feature.properties.p > 0.6 ? "medium" : "low",
-              species: ["Anchoveta"], // Default species from the data
+              species: ["Anchoveta"],
               probability: feature.properties.p,
             }))
 
+          console.log("[v0] Loaded AI hotspots:", hotspots.length)
           setAiHotspots(hotspots)
         }
       } catch (error) {
@@ -267,6 +281,12 @@ export function MapboxFishingMap({
       {isLoading && (
         <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center">
           <div className="text-white text-sm">Loading map...</div>
+        </div>
+      )}
+
+      {error && !isLoading && (
+        <div className="absolute top-16 left-1/2 -translate-x-1/2 bg-red-500/90 text-white text-xs px-3 py-2 rounded-lg z-50">
+          {error}
         </div>
       )}
 

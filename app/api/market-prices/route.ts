@@ -10,6 +10,9 @@ export async function GET(request: Request) {
     const species = searchParams.get("species")
     const days = Number.parseInt(searchParams.get("days") || "7")
 
+    const dateThreshold = new Date()
+    dateThreshold.setDate(dateThreshold.getDate() - days)
+
     // Get latest prices
     if (!species) {
       let result
@@ -23,7 +26,7 @@ export async function GET(request: Request) {
             change_percentage,
             recorded_at
           FROM market_prices
-          WHERE recorded_at >= NOW() - INTERVAL '${days} days'
+          WHERE recorded_at >= ${dateThreshold.toISOString()}
             AND port = ${port}
           ORDER BY species, port, recorded_at DESC
         `
@@ -36,7 +39,7 @@ export async function GET(request: Request) {
             change_percentage,
             recorded_at
           FROM market_prices
-          WHERE recorded_at >= NOW() - INTERVAL '${days} days'
+          WHERE recorded_at >= ${dateThreshold.toISOString()}
           ORDER BY species, port, recorded_at DESC
         `
       }
@@ -57,7 +60,7 @@ export async function GET(request: Request) {
           recorded_at
         FROM market_prices
         WHERE species = ${species}
-          AND recorded_at >= NOW() - INTERVAL '${days} days'
+          AND recorded_at >= ${dateThreshold.toISOString()}
           AND port = ${port}
         ORDER BY recorded_at ASC
       `
@@ -71,7 +74,7 @@ export async function GET(request: Request) {
           recorded_at
         FROM market_prices
         WHERE species = ${species}
-          AND recorded_at >= NOW() - INTERVAL '${days} days'
+          AND recorded_at >= ${dateThreshold.toISOString()}
         ORDER BY recorded_at ASC
       `
     }

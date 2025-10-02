@@ -34,18 +34,27 @@ const chartConfig = {
 export function AIPredictions() {
   const [priceForecast, setPriceForecast] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchPriceForecast = async () => {
       try {
-        const response = await fetch("/api/prices/forecast?species=anchoveta&week=2024-W41")
-        const data = await response.json()
+        const response = await fetch("/prices/anchoveta_price_forecast_2024-W41.json")
 
-        if (data.forecasts && data.forecasts.length > 0) {
-          setPriceForecast(data.forecasts[0])
+        if (!response.ok) {
+          throw new Error(`Failed to fetch price forecast: ${response.statusText}`)
+        }
+
+        const forecasts = await response.json()
+
+        if (forecasts && forecasts.length > 0) {
+          console.log("[v0] Loaded price forecast:", forecasts[0])
+          setPriceForecast(forecasts[0])
+          setError(null)
         }
       } catch (error) {
         console.error("[v0] Failed to fetch price forecast:", error)
+        setError("Failed to load price forecast")
       } finally {
         setLoading(false)
       }
@@ -62,6 +71,10 @@ export function AIPredictions() {
 
   return (
     <div className="space-y-3">
+      {error && (
+        <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 text-red-400 text-xs">{error}</div>
+      )}
+
       {/* Current Predictions Cards */}
       <div className="grid grid-cols-1 gap-3">
         <Card className="bg-slate-800 border-slate-700">
