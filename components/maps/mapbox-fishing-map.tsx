@@ -62,8 +62,8 @@ export function MapboxFishingMap({
   showWeather = true,
   className = '',
 }: MapboxFishingMapProps) {
-  const [zoom, setZoom] = useState(10);
-  const [center, setCenter] = useState<[number, number]>([-81.1, -5.1]);
+  const [zoom, setZoom] = useState(8); // Start with wider view to see Peru coastline
+  const [center, setCenter] = useState<[number, number]>([-81.1, -5.1]); // Paita, Peru
   const [mapImageUrl, setMapImageUrl] = useState('');
   const [selectedHotspot, setSelectedHotspot] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -91,6 +91,12 @@ export function MapboxFishingMap({
     const fetchMapImage = async () => {
       setIsLoading(true);
       try {
+        console.log(
+          '[v0] Fetching map image for center:',
+          center,
+          'zoom:',
+          zoom,
+        );
         const response = await fetch(
           `/api/map-image?lng=${center[0]}&lat=${center[1]}&zoom=${zoom}&width=800&height=600`,
         );
@@ -101,6 +107,7 @@ export function MapboxFishingMap({
 
         const data = await response.json();
         if (data.url) {
+          console.log('[v0] Map image URL:', data.url);
           setMapImageUrl(data.url);
           setError(null);
         }
@@ -171,28 +178,28 @@ export function MapboxFishingMap({
     {
       id: '1',
       name: 'Bote Gavel',
-      coordinates: [-81.05, -5.05],
+      coordinates: [-81.05, -5.05], // Near Paita, Peru
       type: 'high',
       species: ['Anchovy', 'Sardine'],
     },
     {
       id: '2',
       name: 'Boso de Sal Resort',
-      coordinates: [-81.02, -5.08],
+      coordinates: [-81.02, -5.08], // Near Paita, Peru
       type: 'high',
       species: ['Mackerel', 'Tuna'],
     },
     {
       id: '3',
       name: 'Playa Audaz',
-      coordinates: [-81.15, -5.15],
+      coordinates: [-81.15, -5.15], // Southwest of Paita
       type: 'medium',
       species: ['Anchovy', 'Bonito'],
     },
     {
       id: '4',
       name: 'Playa Las Gaviotas',
-      coordinates: [-81.12, -5.18],
+      coordinates: [-81.12, -5.18], // Southwest of Paita
       type: 'medium',
       species: ['Sardine', 'Mackerel'],
     },
@@ -230,29 +237,39 @@ export function MapboxFishingMap({
     const mapWidth = 100;
     const mapHeight = 100;
 
-    const lonRange = 0.4 / zoom;
-    const latRange = 0.4 / zoom;
+    // Calculate the visible map bounds based on zoom level
+    // Adjust range based on zoom - higher zoom = smaller visible area
+    const lonRange = 1.0 / Math.pow(2, zoom - 6); // More accurate range calculation
+    const latRange = 1.0 / Math.pow(2, zoom - 6);
 
     // Use currentCenter during dragging for smooth movement
     const activeCenter = isDragging ? currentCenter : center;
 
-    const x =
-      ((coordinates[0] - (activeCenter[0] - lonRange / 2)) / lonRange) *
-      mapWidth;
-    const y =
-      ((activeCenter[1] + latRange / 2 - coordinates[1]) / latRange) *
-      mapHeight;
+    // Calculate relative position within the visible bounds
+    const relativeX =
+      (coordinates[0] - (activeCenter[0] - lonRange / 2)) / lonRange;
+    const relativeY =
+      (activeCenter[1] + latRange / 2 - coordinates[1]) / latRange;
+
+    // Convert to percentage (clamp to ensure visibility)
+    const x = Math.max(0, Math.min(100, relativeX * mapWidth));
+    const y = Math.max(0, Math.min(100, relativeY * mapHeight));
 
     return { x: `${x}%`, y: `${y}%` };
   };
 
   // Use currentCenter during dragging for consistent UI positioning
   const activeCenter = isDragging ? currentCenter : center;
+
+  // Calculate map bounds that match the Mapbox static image
+  const lonRange = 1.0 / Math.pow(2, zoom - 6);
+  const latRange = 1.0 / Math.pow(2, zoom - 6);
+
   const mapBounds = {
-    north: activeCenter[1] + 0.2 / zoom,
-    south: activeCenter[1] - 0.2 / zoom,
-    east: activeCenter[0] + 0.2 / zoom,
-    west: activeCenter[0] - 0.2 / zoom,
+    north: activeCenter[1] + latRange / 2,
+    south: activeCenter[1] - latRange / 2,
+    east: activeCenter[0] + lonRange / 2,
+    west: activeCenter[0] - lonRange / 2,
   };
 
   const enhancedWeather: EnhancedWeatherData[] = [
@@ -392,6 +409,18 @@ export function MapboxFishingMap({
           hotspot.coordinates[0] <= mapBounds.east &&
           hotspot.coordinates[1] >= mapBounds.south &&
           hotspot.coordinates[1] <= mapBounds.north;
+
+        // Debug logging for first hotspot
+        if (hotspot.id === '1' || hotspot.id === 'ai-hotspot-0') {
+          console.log('[v0] Hotspot debug:', {
+            id: hotspot.id,
+            coordinates: hotspot.coordinates,
+            position,
+            isVisible,
+            mapBounds,
+            activeCenter,
+          });
+        }
 
         if (!isVisible) return null;
 
