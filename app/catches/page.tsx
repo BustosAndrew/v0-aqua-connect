@@ -1,6 +1,4 @@
 import { MainLayout } from "@/components/layout/main-layout"
-import { Button } from "@/components/ui/button"
-import { Plus } from "lucide-react"
 import { CatchLogsTable } from "@/components/catches/catch-logs-table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { CatchTrendsChart } from "@/components/analytics/catch-trends-chart"
@@ -8,15 +6,7 @@ import { IncomeTrendsChart } from "@/components/analytics/income-trends-chart"
 
 export default function CatchesPage() {
   return (
-    <MainLayout
-      title="Catch Logs"
-      headerActions={
-        <Button className="bg-blue-600 hover:bg-blue-700">
-          <Plus className="h-4 w-4 mr-2" />
-          New Catch
-        </Button>
-      }
-    >
+    <MainLayout title="Catch Logs">
       <Tabs defaultValue="logs" className="w-full">
         <TabsList className="grid w-full grid-cols-3 bg-slate-800 border-slate-700">
           <TabsTrigger

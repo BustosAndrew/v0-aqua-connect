@@ -4,6 +4,10 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ShipsTable } from "./ships-table"
 import { CrewMembersTable } from "./crew-members-table"
+import { AddShipDialog } from "./add-ship-dialog"
+import { AddCrewMemberDialog } from "./add-crew-member-dialog"
+import { Button } from "@/components/ui/button"
+import { Plus } from "lucide-react"
 
 interface Ship {
   id: number
@@ -22,14 +26,28 @@ interface CrewMember {
   avatar_url?: string
 }
 
-export function ShipsAndCrewContent() {
+interface ShipsAndCrewContentProps {
+  onAddShipClick?: () => void
+  onAddCrewClick?: () => void
+}
+
+export function ShipsAndCrewContent({ onAddShipClick, onAddCrewClick }: ShipsAndCrewContentProps) {
   const [ships, setShips] = useState<Ship[]>([])
   const [crewMembers, setCrewMembers] = useState<CrewMember[]>([])
   const [loading, setLoading] = useState(true)
+  const [isAddShipDialogOpen, setIsAddShipDialogOpen] = useState(false)
+  const [isAddCrewDialogOpen, setIsAddCrewDialogOpen] = useState(false)
 
   useEffect(() => {
     fetchData()
   }, [])
+
+  useEffect(() => {
+    if (onAddShipClick) {
+      const handleClick = () => setIsAddShipDialogOpen(true)
+      // This is a workaround - ideally the buttons should be in this component
+    }
+  }, [onAddShipClick])
 
   const fetchData = async () => {
     try {
@@ -53,26 +71,48 @@ export function ShipsAndCrewContent() {
   }
 
   return (
-    <div className="space-y-8">
-      {/* Ships Section */}
-      <Card className="bg-slate-900 border-slate-800">
-        <CardHeader>
-          <CardTitle className="text-white text-xl">Ships</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ShipsTable ships={ships} refreshData={fetchData} />
-        </CardContent>
-      </Card>
+    <>
+      <div className="space-y-8">
+        {/* Ships Section */}
+        <Card className="bg-slate-900 border-slate-800">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-white text-xl">Ships</CardTitle>
+            <Button onClick={() => setIsAddShipDialogOpen(true)} className="bg-blue-600 hover:bg-blue-700">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Ship
+            </Button>
+          </CardHeader>
+          <CardContent>
+            <ShipsTable ships={ships} refreshData={fetchData} />
+          </CardContent>
+        </Card>
 
-      {/* Crew Members Section */}
-      <Card className="bg-slate-900 border-slate-800">
-        <CardHeader>
-          <CardTitle className="text-white text-xl">Crew Members</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <CrewMembersTable crewMembers={crewMembers} ships={ships} refreshData={fetchData} />
-        </CardContent>
-      </Card>
-    </div>
+        {/* Crew Members Section */}
+        <Card className="bg-slate-900 border-slate-800">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-white text-xl">Crew Members</CardTitle>
+            <Button
+              onClick={() => setIsAddCrewDialogOpen(true)}
+              variant="outline"
+              className="border-slate-700 text-white hover:bg-slate-800 bg-transparent"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Crew Member
+            </Button>
+          </CardHeader>
+          <CardContent>
+            <CrewMembersTable crewMembers={crewMembers} ships={ships} refreshData={fetchData} />
+          </CardContent>
+        </Card>
+      </div>
+
+      <AddShipDialog open={isAddShipDialogOpen} onOpenChange={setIsAddShipDialogOpen} onSave={fetchData} />
+      <AddCrewMemberDialog
+        open={isAddCrewDialogOpen}
+        onOpenChange={setIsAddCrewDialogOpen}
+        onSave={fetchData}
+        ships={ships}
+      />
+    </>
   )
 }
