@@ -41,31 +41,59 @@ export function AIPredictions() {
       <div className="grid grid-cols-1 gap-3">
         <Card className="bg-slate-800 border-slate-700">
           <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="space-y-2">
-                <p className="text-sm text-slate-400 flex items-center gap-2">
-                  <Brain className="h-4 w-4 text-blue-400" />
-                  Fish Availability
-                </p>
-                <p className="text-2xl font-bold text-blue-400">{currentAvailability}%</p>
-                <div className="flex items-center gap-2 text-green-400">
-                  <TrendingUp className="h-3 w-3" />
-                  <span className="text-xs">High confidence</span>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="space-y-2">
+                  <p className="text-sm text-slate-400 flex items-center gap-2">
+                    <Brain className="h-4 w-4 text-blue-400" />
+                    Fish Availability
+                  </p>
+                  <p className="text-2xl font-bold text-blue-400">{currentAvailability}%</p>
+                  <div className="flex items-center gap-2 text-green-400">
+                    <TrendingUp className="h-3 w-3" />
+                    <span className="text-xs">High confidence</span>
+                  </div>
                 </div>
               </div>
-              <div className="h-16 w-24">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={predictionData.slice(0, 4)}>
-                    <Area
-                      type="monotone"
-                      dataKey="availability"
-                      stroke="var(--color-availability)"
-                      fill="var(--color-availability)"
-                      fillOpacity={0.3}
-                      strokeWidth={2}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
+              <div className="h-24 w-full">
+                <ChartContainer config={chartConfig} className="h-full w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={predictionData} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
+                      <defs>
+                        <linearGradient id="availabilityGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="var(--color-availability)" stopOpacity={0.3} />
+                          <stop offset="95%" stopColor="var(--color-availability)" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <XAxis
+                        dataKey="hour"
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fill: "#64748b", fontSize: 10 }}
+                        interval={1}
+                      />
+                      <YAxis
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fill: "#64748b", fontSize: 10 }}
+                        width={30}
+                        domain={[60, 90]}
+                      />
+                      <ChartTooltip
+                        content={<ChartTooltipContent />}
+                        formatter={(value: number) => [`${value}%`, "Availability"]}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="availability"
+                        stroke="var(--color-availability)"
+                        fill="url(#availabilityGradient)"
+                        strokeWidth={2}
+                        dot={{ fill: "var(--color-availability)", strokeWidth: 1, r: 3 }}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
               </div>
             </div>
           </CardContent>
@@ -83,11 +111,13 @@ export function AIPredictions() {
                 </div>
               </div>
               <div className="h-16 w-24">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={predictionData.slice(0, 4)}>
-                    <Line type="monotone" dataKey="price" stroke="var(--color-price)" strokeWidth={2} dot={false} />
-                  </LineChart>
-                </ResponsiveContainer>
+                <ChartContainer config={chartConfig} className="h-full w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={predictionData.slice(0, 4)}>
+                      <Line type="monotone" dataKey="price" stroke="var(--color-price)" strokeWidth={2} dot={false} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
               </div>
             </div>
           </CardContent>
