@@ -1,3 +1,6 @@
+"use client"
+
+import { useState } from "react"
 import { MainLayout } from "@/components/layout/main-layout"
 import { Button } from "@/components/ui/button"
 import { Plus } from "lucide-react"
@@ -5,13 +8,21 @@ import { CatchLogsTable } from "@/components/catches/catch-logs-table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { CatchTrendsChart } from "@/components/analytics/catch-trends-chart"
 import { IncomeTrendsChart } from "@/components/analytics/income-trends-chart"
+import { AddCatchDialog } from "@/components/catches/add-catch-dialog"
 
 export default function CatchesPage() {
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+  const [refreshKey, setRefreshKey] = useState(0)
+
+  const handleAddCatch = () => {
+    setRefreshKey((prev) => prev + 1)
+  }
+
   return (
     <MainLayout
       title="Catch Logs"
       headerActions={
-        <Button className="bg-blue-600 hover:bg-blue-700">
+        <Button onClick={() => setIsAddDialogOpen(true)} className="bg-blue-600 hover:bg-blue-700">
           <Plus className="h-4 w-4 mr-2" />
           New Catch
         </Button>
@@ -41,7 +52,7 @@ export default function CatchesPage() {
 
         <div className="mt-6">
           <TabsContent value="logs">
-            <CatchLogsTable />
+            <CatchLogsTable key={refreshKey} />
           </TabsContent>
 
           <TabsContent value="trends" className="space-y-6">
@@ -60,6 +71,8 @@ export default function CatchesPage() {
           </TabsContent>
         </div>
       </Tabs>
+
+      <AddCatchDialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen} onAdd={handleAddCatch} />
     </MainLayout>
   )
 }
