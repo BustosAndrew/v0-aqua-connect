@@ -87,34 +87,43 @@ export function MapboxFishingMap({
     }
   }, [center, isDragging]);
 
+  // Debounced map image fetching - only fetch when not dragging and after a delay
   useEffect(() => {
-    const fetchMapImage = async () => {
-      setIsLoading(true);
-      try {
-        const response = await fetch(
-          `/api/map-image?lng=${center[0]}&lat=${center[1]}&zoom=${zoom}&width=800&height=600`,
-        );
+    if (isDragging) return; // Don't fetch while dragging
 
-        if (!response.ok) {
-          throw new Error(`Failed to fetch map image: ${response.statusText}`);
+    const timeoutId = setTimeout(() => {
+      const fetchMapImage = async () => {
+        setIsLoading(true);
+        try {
+          const response = await fetch(
+            `/api/map-image?lng=${center[0]}&lat=${center[1]}&zoom=${zoom}&width=800&height=600`,
+          );
+
+          if (!response.ok) {
+            throw new Error(
+              `Failed to fetch map image: ${response.statusText}`,
+            );
+          }
+
+          const data = await response.json();
+          if (data.url) {
+            setMapImageUrl(data.url);
+            setError(null);
+          }
+        } catch (error) {
+          console.error('[v0] Failed to fetch map image:', error);
+          setError('Failed to load map image');
+          setMapImageUrl('/placeholder.svg?height=600&width=800');
+        } finally {
+          setIsLoading(false);
         }
+      };
 
-        const data = await response.json();
-        if (data.url) {
-          setMapImageUrl(data.url);
-          setError(null);
-        }
-      } catch (error) {
-        console.error('[v0] Failed to fetch map image:', error);
-        setError('Failed to load map image');
-        setMapImageUrl('/placeholder.svg?height=600&width=800');
-      } finally {
-        setIsLoading(false);
-      }
-    };
+      fetchMapImage();
+    }, 150); // Small delay to avoid too frequent updates
 
-    fetchMapImage();
-  }, [center, zoom]);
+    return () => clearTimeout(timeoutId);
+  }, [center, zoom, isDragging]);
 
   useEffect(() => {
     const fetchHotspots = async () => {
@@ -305,8 +314,8 @@ export function MapboxFishingMap({
     const mapWidth = mapRef.current.offsetWidth;
     const mapHeight = mapRef.current.offsetHeight;
 
-    const degreesPerPixelLng = 0.4 / zoom / mapWidth;
-    const degreesPerPixelLat = 0.4 / zoom / mapHeight;
+    const degreesPerPixelLng = 1.0 / Math.pow(2, zoom - 6) / mapWidth;
+    const degreesPerPixelLat = 1.0 / Math.pow(2, zoom - 6) / mapHeight;
 
     const newCenter: [number, number] = [
       dragStart.center[0] - deltaX * degreesPerPixelLng,
