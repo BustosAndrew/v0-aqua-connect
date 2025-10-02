@@ -1,101 +1,131 @@
-"use client"
+'use client';
 
-import type React from "react"
+import type React from 'react';
 
-import { useState, useEffect, useRef } from "react"
-import { Button } from "@/components/ui/button"
-import { Plus, Minus } from "lucide-react"
-import { EnhancedWeatherOverlay } from "./enhanced-weather-overlay"
+import { useState, useEffect, useRef } from 'react';
+import { Button } from '@/components/ui/button';
+import { Plus, Minus } from 'lucide-react';
+import { EnhancedWeatherOverlay } from './enhanced-weather-overlay';
 
 interface FishingHotspot {
-  id: string
-  name: string
-  coordinates: [number, number]
-  type: "high" | "medium" | "low"
-  species: string[]
-  probability?: number
+  id: string;
+  name: string;
+  coordinates: [number, number];
+  type: 'high' | 'medium' | 'low';
+  species: string[];
+  probability?: number;
 }
 
 interface WeatherData {
-  condition: "sunny" | "cloudy" | "windy" | "rainy"
-  windDirection: "north" | "northeast" | "east" | "southeast" | "south" | "southwest" | "west" | "northwest"
-  windSpeed: number
-  coordinates: [number, number]
+  condition: 'sunny' | 'cloudy' | 'windy' | 'rainy';
+  windDirection:
+    | 'north'
+    | 'northeast'
+    | 'east'
+    | 'southeast'
+    | 'south'
+    | 'southwest'
+    | 'west'
+    | 'northwest';
+  windSpeed: number;
+  coordinates: [number, number];
 }
 
 interface EnhancedWeatherData {
-  id: string
-  condition: "sunny" | "cloudy" | "windy" | "rainy"
-  windDirection: "north" | "northeast" | "east" | "southeast" | "south" | "southwest" | "west" | "northwest"
-  windSpeed: number
-  temperature: number
-  coordinates: [number, number]
-  intensity: "high" | "medium" | "low"
+  id: string;
+  condition: 'sunny' | 'cloudy' | 'windy' | 'rainy';
+  windDirection:
+    | 'north'
+    | 'northeast'
+    | 'east'
+    | 'southeast'
+    | 'south'
+    | 'southwest'
+    | 'west'
+    | 'northwest';
+  windSpeed: number;
+  temperature: number;
+  coordinates: [number, number];
+  intensity: 'high' | 'medium' | 'low';
 }
 
 interface MapboxFishingMapProps {
-  hotspots?: FishingHotspot[]
-  weather?: WeatherData[]
-  showWeather?: boolean
-  className?: string
+  hotspots?: FishingHotspot[];
+  weather?: WeatherData[];
+  showWeather?: boolean;
+  className?: string;
 }
 
 export function MapboxFishingMap({
   hotspots = [],
   weather = [],
   showWeather = true,
-  className = "",
+  className = '',
 }: MapboxFishingMapProps) {
-  const [zoom, setZoom] = useState(10)
-  const [center, setCenter] = useState<[number, number]>([-81.1, -5.1])
-  const [mapImageUrl, setMapImageUrl] = useState("")
-  const [selectedHotspot, setSelectedHotspot] = useState<string | null>(null)
-  const [isDragging, setIsDragging] = useState(false)
-  const [dragStart, setDragStart] = useState<{ x: number; y: number; center: [number, number] } | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [aiHotspots, setAiHotspots] = useState<FishingHotspot[]>([])
-  const [error, setError] = useState<string | null>(null)
-  const mapRef = useRef<HTMLDivElement>(null)
+  const [zoom, setZoom] = useState(10);
+  const [center, setCenter] = useState<[number, number]>([-81.1, -5.1]);
+  const [mapImageUrl, setMapImageUrl] = useState('');
+  const [selectedHotspot, setSelectedHotspot] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState<{
+    x: number;
+    y: number;
+    center: [number, number];
+  } | null>(null);
+  const [currentCenter, setCurrentCenter] = useState<[number, number]>([
+    -81.1, -5.1,
+  ]); // For real-time dragging
+  const [isLoading, setIsLoading] = useState(true);
+  const [aiHotspots, setAiHotspots] = useState<FishingHotspot[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const mapRef = useRef<HTMLDivElement>(null);
+
+  // Sync currentCenter with center when not dragging
+  useEffect(() => {
+    if (!isDragging) {
+      setCurrentCenter(center);
+    }
+  }, [center, isDragging]);
 
   useEffect(() => {
     const fetchMapImage = async () => {
-      setIsLoading(true)
+      setIsLoading(true);
       try {
         const response = await fetch(
           `/api/map-image?lng=${center[0]}&lat=${center[1]}&zoom=${zoom}&width=800&height=600`,
-        )
+        );
 
         if (!response.ok) {
-          throw new Error(`Failed to fetch map image: ${response.statusText}`)
+          throw new Error(`Failed to fetch map image: ${response.statusText}`);
         }
 
-        const data = await response.json()
+        const data = await response.json();
         if (data.url) {
-          setMapImageUrl(data.url)
-          setError(null)
+          setMapImageUrl(data.url);
+          setError(null);
         }
       } catch (error) {
-        console.error("[v0] Failed to fetch map image:", error)
-        setError("Failed to load map image")
-        setMapImageUrl("/placeholder.svg?height=600&width=800")
+        console.error('[v0] Failed to fetch map image:', error);
+        setError('Failed to load map image');
+        setMapImageUrl('/placeholder.svg?height=600&width=800');
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
-    }
+    };
 
-    fetchMapImage()
-  }, [center, zoom])
+    fetchMapImage();
+  }, [center, zoom]);
 
   useEffect(() => {
     const fetchHotspots = async () => {
       try {
-        const response = await fetch("/predictions/2024-W28.geojson")
+        const response = await fetch('/predictions/2024-W28.geojson');
 
         if (!response.ok) {
-          throw new Error(`Failed to fetch hotspots: ${response.statusText}`)
+          throw new Error(`Failed to fetch hotspots: ${response.statusText}`);
         }
 
-        const geojsonData = await response.json()
+        const geojsonData = await response.json();
 
         if (geojsonData && geojsonData.features) {
           const hotspots: FishingHotspot[] = geojsonData.features
@@ -104,177 +134,209 @@ export function MapboxFishingMap({
               id: `ai-hotspot-${index}`,
               name: `Hotspot ${index + 1}`,
               coordinates: feature.geometry.coordinates as [number, number],
-              type: feature.properties.p > 0.8 ? "high" : feature.properties.p > 0.6 ? "medium" : "low",
-              species: ["Anchoveta"],
+              type:
+                feature.properties.p > 0.8
+                  ? 'high'
+                  : feature.properties.p > 0.6
+                  ? 'medium'
+                  : 'low',
+              species: ['Anchoveta'],
               probability: feature.properties.p,
-            }))
+            }));
 
-          console.log("[v0] Loaded AI hotspots:", hotspots.length)
+          console.log('[v0] Loaded AI hotspots:', hotspots.length);
 
           if (hotspots.length > 0) {
-            const avgLng = hotspots.reduce((sum, h) => sum + h.coordinates[0], 0) / hotspots.length
-            const avgLat = hotspots.reduce((sum, h) => sum + h.coordinates[1], 0) / hotspots.length
-            console.log("[v0] Centering map on hotspots:", [avgLng, avgLat])
-            setCenter([avgLng, avgLat])
+            const avgLng =
+              hotspots.reduce((sum, h) => sum + h.coordinates[0], 0) /
+              hotspots.length;
+            const avgLat =
+              hotspots.reduce((sum, h) => sum + h.coordinates[1], 0) /
+              hotspots.length;
+            console.log('[v0] Centering map on hotspots:', [avgLng, avgLat]);
+            setCenter([avgLng, avgLat]);
           }
 
-          setAiHotspots(hotspots)
+          setAiHotspots(hotspots);
         }
       } catch (error) {
-        console.error("[v0] Failed to fetch AI hotspots:", error)
+        console.error('[v0] Failed to fetch AI hotspots:', error);
       }
-    }
+    };
 
-    fetchHotspots()
-  }, [])
+    fetchHotspots();
+  }, []);
 
   const defaultHotspots: FishingHotspot[] = [
     {
-      id: "1",
-      name: "Bote Gavel",
+      id: '1',
+      name: 'Bote Gavel',
       coordinates: [-81.05, -5.05],
-      type: "high",
-      species: ["Anchovy", "Sardine"],
+      type: 'high',
+      species: ['Anchovy', 'Sardine'],
     },
     {
-      id: "2",
-      name: "Boso de Sal Resort",
+      id: '2',
+      name: 'Boso de Sal Resort',
       coordinates: [-81.02, -5.08],
-      type: "high",
-      species: ["Mackerel", "Tuna"],
+      type: 'high',
+      species: ['Mackerel', 'Tuna'],
     },
     {
-      id: "3",
-      name: "Playa Audaz",
+      id: '3',
+      name: 'Playa Audaz',
       coordinates: [-81.15, -5.15],
-      type: "medium",
-      species: ["Anchovy", "Bonito"],
+      type: 'medium',
+      species: ['Anchovy', 'Bonito'],
     },
     {
-      id: "4",
-      name: "Playa Las Gaviotas",
+      id: '4',
+      name: 'Playa Las Gaviotas',
       coordinates: [-81.12, -5.18],
-      type: "medium",
-      species: ["Sardine", "Mackerel"],
+      type: 'medium',
+      species: ['Sardine', 'Mackerel'],
     },
-  ]
+  ];
 
-  const activeHotspots = aiHotspots.length > 0 ? aiHotspots : hotspots.length > 0 ? hotspots : defaultHotspots
+  const activeHotspots =
+    aiHotspots.length > 0
+      ? aiHotspots
+      : hotspots.length > 0
+      ? hotspots
+      : defaultHotspots;
 
   const handleZoomIn = () => {
-    setZoom((prev) => Math.min(prev + 1, 18))
-  }
+    setZoom((prev) => Math.min(prev + 1, 18));
+  };
 
   const handleZoomOut = () => {
-    setZoom((prev) => Math.max(prev - 1, 1))
-  }
+    setZoom((prev) => Math.max(prev - 1, 1));
+  };
 
   const getHotspotColor = (type: string) => {
     switch (type) {
-      case "high":
-        return "bg-pink-500"
-      case "medium":
-        return "bg-green-600"
-      case "low":
-        return "bg-blue-600"
+      case 'high':
+        return 'bg-pink-500';
+      case 'medium':
+        return 'bg-green-600';
+      case 'low':
+        return 'bg-blue-600';
       default:
-        return "bg-blue-600"
+        return 'bg-blue-600';
     }
-  }
+  };
 
   const getHotspotPosition = (coordinates: [number, number]) => {
-    const mapWidth = 100
-    const mapHeight = 100
+    const mapWidth = 100;
+    const mapHeight = 100;
 
-    const lonRange = 0.4 / zoom
-    const latRange = 0.4 / zoom
+    const lonRange = 0.4 / zoom;
+    const latRange = 0.4 / zoom;
 
-    const x = ((coordinates[0] - (center[0] - lonRange / 2)) / lonRange) * mapWidth
-    const y = ((center[1] + latRange / 2 - coordinates[1]) / latRange) * mapHeight
+    // Use currentCenter during dragging for smooth movement
+    const activeCenter = isDragging ? currentCenter : center;
 
-    return { x: `${x}%`, y: `${y}%` }
-  }
+    const x =
+      ((coordinates[0] - (activeCenter[0] - lonRange / 2)) / lonRange) *
+      mapWidth;
+    const y =
+      ((activeCenter[1] + latRange / 2 - coordinates[1]) / latRange) *
+      mapHeight;
 
+    return { x: `${x}%`, y: `${y}%` };
+  };
+
+  // Use currentCenter during dragging for consistent UI positioning
+  const activeCenter = isDragging ? currentCenter : center;
   const mapBounds = {
-    north: center[1] + 0.2 / zoom,
-    south: center[1] - 0.2 / zoom,
-    east: center[0] + 0.2 / zoom,
-    west: center[0] - 0.2 / zoom,
-  }
+    north: activeCenter[1] + 0.2 / zoom,
+    south: activeCenter[1] - 0.2 / zoom,
+    east: activeCenter[0] + 0.2 / zoom,
+    west: activeCenter[0] - 0.2 / zoom,
+  };
 
   const enhancedWeather: EnhancedWeatherData[] = [
     {
-      id: "weather-1",
-      condition: "windy",
-      windDirection: "northwest",
+      id: 'weather-1',
+      condition: 'windy',
+      windDirection: 'northwest',
       windSpeed: 15,
       temperature: 22,
       coordinates: [-81.08, -5.02],
-      intensity: "high",
+      intensity: 'high',
     },
     {
-      id: "weather-2",
-      condition: "sunny",
-      windDirection: "west",
+      id: 'weather-2',
+      condition: 'sunny',
+      windDirection: 'west',
       windSpeed: 8,
       temperature: 25,
       coordinates: [-81.18, -5.12],
-      intensity: "medium",
+      intensity: 'medium',
     },
     {
-      id: "weather-3",
-      condition: "cloudy",
-      windDirection: "southwest",
+      id: 'weather-3',
+      condition: 'cloudy',
+      windDirection: 'southwest',
       windSpeed: 12,
       temperature: 20,
       coordinates: [-81.05, -5.2],
-      intensity: "medium",
+      intensity: 'medium',
     },
     {
-      id: "weather-4",
-      condition: "rainy",
-      windDirection: "northeast",
+      id: 'weather-4',
+      condition: 'rainy',
+      windDirection: 'northeast',
       windSpeed: 18,
       temperature: 18,
       coordinates: [-81.15, -5.08],
-      intensity: "high",
+      intensity: 'high',
     },
-  ]
+  ];
 
   const handleMouseDown = (e: React.MouseEvent) => {
-    setIsDragging(true)
-    setDragStart({ x: e.clientX, y: e.clientY, center: [...center] })
-  }
+    setIsDragging(true);
+    setDragStart({ x: e.clientX, y: e.clientY, center: [...center] });
+  };
 
   const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging || !dragStart || !mapRef.current) return
+    if (!isDragging || !dragStart || !mapRef.current) return;
 
-    const deltaX = e.clientX - dragStart.x
-    const deltaY = e.clientY - dragStart.y
+    const deltaX = e.clientX - dragStart.x;
+    const deltaY = e.clientY - dragStart.y;
 
-    const mapWidth = mapRef.current.offsetWidth
-    const mapHeight = mapRef.current.offsetHeight
+    const mapWidth = mapRef.current.offsetWidth;
+    const mapHeight = mapRef.current.offsetHeight;
 
-    const degreesPerPixelLng = 0.4 / zoom / mapWidth
-    const degreesPerPixelLat = 0.4 / zoom / mapHeight
+    const degreesPerPixelLng = 0.4 / zoom / mapWidth;
+    const degreesPerPixelLat = 0.4 / zoom / mapHeight;
 
     const newCenter: [number, number] = [
       dragStart.center[0] - deltaX * degreesPerPixelLng,
       dragStart.center[1] + deltaY * degreesPerPixelLat,
-    ]
+    ];
 
-    setCenter(newCenter)
-  }
+    // Update currentCenter for real-time UI movement
+    setCurrentCenter(newCenter);
+  };
 
   const handleMouseUp = () => {
-    setIsDragging(false)
-    setDragStart(null)
-  }
+    if (isDragging && currentCenter) {
+      // Finalize the center position
+      setCenter(currentCenter);
+    }
+    setIsDragging(false);
+    setDragStart(null);
+  };
 
   const handleMouseLeave = () => {
-    setIsDragging(false)
-    setDragStart(null)
-  }
+    if (isDragging && currentCenter) {
+      // Finalize the center position
+      setCenter(currentCenter);
+    }
+    setIsDragging(false);
+    setDragStart(null);
+  };
 
   return (
     <div
@@ -284,112 +346,128 @@ export function MapboxFishingMap({
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseLeave}
-      style={{ cursor: isDragging ? "grabbing" : "grab" }}
+      style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
     >
       {isLoading && (
-        <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center">
-          <div className="text-white text-sm">Loading map...</div>
+        <div className='absolute inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center'>
+          <div className='text-white text-sm'>Loading map...</div>
         </div>
       )}
 
       {error && !isLoading && (
-        <div className="absolute top-16 left-1/2 -translate-x-1/2 bg-red-500/90 text-white text-xs px-3 py-2 rounded-lg z-50">
+        <div className='absolute top-16 left-1/2 -translate-x-1/2 bg-red-500/90 text-white text-xs px-3 py-2 rounded-lg z-50'>
           {error}
         </div>
       )}
 
-      <div className="absolute top-4 right-4 z-10 flex flex-col gap-2">
+      <div className='absolute top-4 right-4 z-10 flex flex-col gap-2'>
         <Button
-          size="icon"
-          variant="outline"
-          className="bg-slate-800/90 border-slate-700 text-white backdrop-blur-sm hover:bg-slate-700"
+          size='icon'
+          variant='outline'
+          className='bg-slate-800/90 border-slate-700 text-white backdrop-blur-sm hover:bg-slate-700'
           onClick={handleZoomIn}
         >
-          <Plus className="h-4 w-4" />
+          <Plus className='h-4 w-4' />
         </Button>
         <Button
-          size="icon"
-          variant="outline"
-          className="bg-slate-800/90 border-slate-700 text-white backdrop-blur-sm hover:bg-slate-700"
+          size='icon'
+          variant='outline'
+          className='bg-slate-800/90 border-slate-700 text-white backdrop-blur-sm hover:bg-slate-700'
           onClick={handleZoomOut}
         >
-          <Minus className="h-4 w-4" />
+          <Minus className='h-4 w-4' />
         </Button>
       </div>
 
       <img
-        src={mapImageUrl || "/placeholder.svg?height=600&width=800"}
-        alt="Fishing map"
-        className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+        src={mapImageUrl || '/placeholder.svg?height=600&width=800'}
+        alt='Fishing map'
+        className='absolute inset-0 w-full h-full object-cover pointer-events-none'
       />
 
       {activeHotspots.map((hotspot) => {
-        const position = getHotspotPosition(hotspot.coordinates)
+        const position = getHotspotPosition(hotspot.coordinates);
         const isVisible =
           hotspot.coordinates[0] >= mapBounds.west &&
           hotspot.coordinates[0] <= mapBounds.east &&
           hotspot.coordinates[1] >= mapBounds.south &&
-          hotspot.coordinates[1] <= mapBounds.north
+          hotspot.coordinates[1] <= mapBounds.north;
 
-        if (!isVisible) return null
+        if (!isVisible) return null;
 
         return (
           <div
             key={hotspot.id}
-            className="absolute z-30 -translate-x-1/2 -translate-y-1/2"
+            className='absolute z-30 -translate-x-1/2 -translate-y-1/2 pointer-events-none'
             style={{ left: position.x, top: position.y }}
           >
             <div
               className={`w-5 h-5 rounded-full border-2 border-white shadow-lg cursor-pointer transition-transform hover:scale-150 ${getHotspotColor(
                 hotspot.type,
-              )} animate-pulse`}
+              )} animate-pulse pointer-events-auto`}
               style={{
-                boxShadow: "0 0 10px rgba(255, 255, 255, 0.5), 0 0 20px currentColor",
+                boxShadow:
+                  '0 0 10px rgba(255, 255, 255, 0.5), 0 0 20px currentColor',
               }}
-              onClick={() => setSelectedHotspot(selectedHotspot === hotspot.id ? null : hotspot.id)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelectedHotspot(
+                  selectedHotspot === hotspot.id ? null : hotspot.id,
+                );
+              }}
+              onMouseDown={(e) => e.stopPropagation()}
             />
             {selectedHotspot === hotspot.id && (
-              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-slate-800/95 backdrop-blur-sm rounded-lg p-2 text-white text-xs whitespace-nowrap shadow-xl z-40">
-                <div className="font-semibold mb-1">{hotspot.name}</div>
-                <div className="text-slate-300">Species: {hotspot.species.join(", ")}</div>
-                <div className="text-slate-300">Priority: {hotspot.type}</div>
+              <div className='absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-slate-800/95 backdrop-blur-sm rounded-lg p-2 text-white text-xs whitespace-nowrap shadow-xl z-40 pointer-events-auto'>
+                <div className='font-semibold mb-1'>{hotspot.name}</div>
+                <div className='text-slate-300'>
+                  Species: {hotspot.species.join(', ')}
+                </div>
+                <div className='text-slate-300'>Priority: {hotspot.type}</div>
                 {hotspot.probability && (
-                  <div className="text-slate-300">Probability: {(hotspot.probability * 100).toFixed(1)}%</div>
+                  <div className='text-slate-300'>
+                    Probability: {(hotspot.probability * 100).toFixed(1)}%
+                  </div>
                 )}
               </div>
             )}
           </div>
-        )
+        );
       })}
 
-      {showWeather && <EnhancedWeatherOverlay weatherPoints={enhancedWeather} mapBounds={mapBounds} />}
+      {showWeather && (
+        <EnhancedWeatherOverlay
+          weatherPoints={enhancedWeather}
+          mapBounds={mapBounds}
+        />
+      )}
 
-      <div className="absolute bottom-4 left-4 bg-slate-800/90 backdrop-blur-sm rounded-lg p-3 text-white text-xs z-10">
-        <div className="font-semibold mb-2">Fishing Hotspots</div>
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-2">
+      <div className='absolute bottom-4 left-4 bg-slate-800/90 backdrop-blur-sm rounded-lg p-3 text-white text-xs z-10 pointer-events-none'>
+        <div className='font-semibold mb-2'>Fishing Hotspots</div>
+        <div className='flex flex-col gap-1'>
+          <div className='flex items-center gap-2'>
             <div
-              className="w-4 h-4 rounded-full bg-pink-500 border-2 border-white shadow-lg"
-              style={{ boxShadow: "0 0 8px rgba(236, 72, 153, 0.6)" }}
+              className='w-4 h-4 rounded-full bg-pink-500 border-2 border-white shadow-lg'
+              style={{ boxShadow: '0 0 8px rgba(236, 72, 153, 0.6)' }}
             />
             <span>High Priority</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className='flex items-center gap-2'>
             <div
-              className="w-4 h-4 rounded-full bg-green-600 border-2 border-white shadow-lg"
-              style={{ boxShadow: "0 0 8px rgba(22, 163, 74, 0.6)" }}
+              className='w-4 h-4 rounded-full bg-green-600 border-2 border-white shadow-lg'
+              style={{ boxShadow: '0 0 8px rgba(22, 163, 74, 0.6)' }}
             />
             <span>Medium Priority</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className='flex items-center gap-2'>
             <div
-              className="w-4 h-4 rounded-full bg-blue-600 border-2 border-white shadow-lg"
-              style={{ boxShadow: "0 0 8px rgba(37, 99, 235, 0.6)" }}
+              className='w-4 h-4 rounded-full bg-blue-600 border-2 border-white shadow-lg'
+              style={{ boxShadow: '0 0 8px rgba(37, 99, 235, 0.6)' }}
             />
             <span>Low Priority</span>
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }
