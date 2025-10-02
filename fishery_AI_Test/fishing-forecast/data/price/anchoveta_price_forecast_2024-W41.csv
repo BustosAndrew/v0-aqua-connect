@@ -1,0 +1,6 @@
+species,port,target_week,price_pred_pen_perkg,direction,model_mae_val,directional_acc_val,lower_1sd,upper_1sd
+Anchoveta,Callao,2024-W41,2.228,Down,0.105,0.571,2.115,2.341
+Anchoveta,Chimbote,2024-W41,1.971,Down,0.105,0.571,1.858,2.084
+Anchoveta,Matarani,2024-W41,1.931,Up,0.105,0.571,1.818,2.044
+Anchoveta,Paita,2024-W41,2.114,Up,0.105,0.571,2.001,2.227
+Anchoveta,Pisco,2024-W41,2.026,Down,0.105,0.571,1.913,2.139
