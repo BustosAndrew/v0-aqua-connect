@@ -91,12 +91,6 @@ export function MapboxFishingMap({
     const fetchMapImage = async () => {
       setIsLoading(true);
       try {
-        console.log(
-          '[v0] Fetching map image for center:',
-          center,
-          'zoom:',
-          zoom,
-        );
         const response = await fetch(
           `/api/map-image?lng=${center[0]}&lat=${center[1]}&zoom=${zoom}&width=800&height=600`,
         );
@@ -107,7 +101,6 @@ export function MapboxFishingMap({
 
         const data = await response.json();
         if (data.url) {
-          console.log('[v0] Map image URL:', data.url);
           setMapImageUrl(data.url);
           setError(null);
         }
@@ -151,19 +144,6 @@ export function MapboxFishingMap({
               probability: feature.properties.p,
             }));
 
-          console.log('[v0] Loaded AI hotspots:', hotspots.length);
-
-          if (hotspots.length > 0) {
-            const avgLng =
-              hotspots.reduce((sum, h) => sum + h.coordinates[0], 0) /
-              hotspots.length;
-            const avgLat =
-              hotspots.reduce((sum, h) => sum + h.coordinates[1], 0) /
-              hotspots.length;
-            console.log('[v0] Centering map on hotspots:', [avgLng, avgLat]);
-            setCenter([avgLng, avgLat]);
-          }
-
           setAiHotspots(hotspots);
         }
       } catch (error) {
@@ -178,28 +158,28 @@ export function MapboxFishingMap({
     {
       id: '1',
       name: 'Bote Gavel',
-      coordinates: [-81.05, -5.05], // Near Paita, Peru
+      coordinates: [-81.3, -5.0], // Offshore from Paita, Peru
       type: 'high',
       species: ['Anchovy', 'Sardine'],
     },
     {
       id: '2',
       name: 'Boso de Sal Resort',
-      coordinates: [-81.02, -5.08], // Near Paita, Peru
+      coordinates: [-81.4, -5.1], // Further offshore from Paita
       type: 'high',
       species: ['Mackerel', 'Tuna'],
     },
     {
       id: '3',
       name: 'Playa Audaz',
-      coordinates: [-81.15, -5.15], // Southwest of Paita
+      coordinates: [-81.5, -5.3], // Offshore southwest of Paita
       type: 'medium',
       species: ['Anchovy', 'Bonito'],
     },
     {
       id: '4',
       name: 'Playa Las Gaviotas',
-      coordinates: [-81.12, -5.18], // Southwest of Paita
+      coordinates: [-81.6, -5.4], // Further offshore southwest
       type: 'medium',
       species: ['Sardine', 'Mackerel'],
     },
@@ -279,7 +259,7 @@ export function MapboxFishingMap({
       windDirection: 'northwest',
       windSpeed: 15,
       temperature: 22,
-      coordinates: [-81.08, -5.02],
+      coordinates: [-81.3, -5.0], // Offshore near first hotspot
       intensity: 'high',
     },
     {
@@ -288,7 +268,7 @@ export function MapboxFishingMap({
       windDirection: 'west',
       windSpeed: 8,
       temperature: 25,
-      coordinates: [-81.18, -5.12],
+      coordinates: [-81.5, -5.2], // Offshore mid-range
       intensity: 'medium',
     },
     {
@@ -297,7 +277,7 @@ export function MapboxFishingMap({
       windDirection: 'southwest',
       windSpeed: 12,
       temperature: 20,
-      coordinates: [-81.05, -5.2],
+      coordinates: [-81.4, -5.4], // Offshore southern area
       intensity: 'medium',
     },
     {
@@ -306,7 +286,7 @@ export function MapboxFishingMap({
       windDirection: 'northeast',
       windSpeed: 18,
       temperature: 18,
-      coordinates: [-81.15, -5.08],
+      coordinates: [-81.6, -5.1], // Further offshore
       intensity: 'high',
     },
   ];
