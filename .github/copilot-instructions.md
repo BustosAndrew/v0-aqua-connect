@@ -9,38 +9,59 @@ AquaConnect is an AI-powered dashboard for artisanal fishing cooperatives in Per
 ### Core Tech Stack
 
 - **Framework**: Next.js 15 with App Router, React 19, TypeScript
-- **Database**: PostgreSQL with Prisma ORM
-- **UI**: shadcn/ui components with Radix UI primitives
-- **Styling**: Tailwind CSS with dark theme (`className="dark"` in layout)
+- **Database**: PostgreSQL with Prisma ORM + Neon serverless PostgreSQL
+- **UI**: shadcn/ui components (New York style) with Radix UI primitives
+- **Styling**: Tailwind CSS v4 with dark theme (`className="dark"` in layout)
+- **Icons**: Lucide React
+- **Charts**: Recharts library
+- **Fonts**: Inter (sans) + JetBrains Mono (mono)
+- **Package Manager**: pnpm
 - **Deployment**: Vercel (auto-synced from v0.app)
 
 ### Layout Structure
 
 - **MainLayout**: Central wrapper at `components/layout/main-layout.tsx` - all pages use this
-- **Sidebar Navigation**: Fixed navigation with 8 main sections (Overview, Trip Planning, Trips, etc.)
+- **Theme**: Dark theme with slate color scheme (`bg-slate-950`, `bg-slate-900`, `border-slate-800`)
+- **Sidebar Navigation**: Fixed navigation with 8 main sections (Overview, Trip Planning, Trips, Forecasts, Predictions, Market Prices, Co-op Coordination, Catches)
 - **Page Pattern**: `MainLayout` → `title` + `subtitle` + optional `headerActions` → content component
 
-### Domain Models (Prisma Schema)
+### Database Architecture
 
-Key entities represent the fishing cooperative business:
+**Primary Database**: Neon serverless PostgreSQL with dual access patterns:
 
-- **Port**: Base locations (Paita, Callao, etc.)
-- **Ship**: Fleet vessels with crew relationships
-- **Trip**: Core business entity with species, catches, coordinates
-- **FishSpecies**: Anchovy, Sardine, Mackerel, etc.
-- **CatchLog**: Detailed fishing results
-- **CrewMember**: Vessel staff with roles
+- **Prisma ORM**: Full schema management and type safety (`lib/prisma.ts`)
+- **Direct SQL**: Neon serverless client for API routes (`lib/db.ts`)
+
+**Schema Design**: Comprehensive fishing cooperative domain model with:
+
+- **Core Entities**: Port, Ship, CrewMember, FishSpecies, Trip
+- **Business Logic**: CatchLog, CoopIncome, RealTimeMarketData
+- **AI Features**: PricePrediction, FishAvailability, FishingHotspotForecast
+
+### API & Data Flow
+
+**Backend Architecture**:
+
+- **API Routes**: RESTful endpoints in `app/api/` (catches, trips, market-prices, predictions, etc.)
+- **Database Access**: Neon serverless client for real-time queries
+- **Data Management**: SQL scripts in `scripts/` for schema and seed data
+
+**Frontend Data Patterns**:
+
+- **Real API Integration**: Components fetch from actual API endpoints
+- **State Management**: React useState for local state, useEffect for data fetching
+- **Error Handling**: Proper try/catch with console error logging
 
 ### Component Organization
 
-\`\`\`
+```
 components/
 ├── ui/              # shadcn/ui base components
 ├── layout/          # MainLayout, Sidebar, Header
 ├── dashboard/       # Homepage dashboard widgets
 ├── [domain]/        # Feature-specific components (catches/, trips/, etc.)
 └── maps/           # MapboxFishingMap + weather overlays
-\`\`\`
+```
 
 ## Development Conventions
 
@@ -49,6 +70,7 @@ components/
 - **Pages**: App Router pattern (`app/[route]/page.tsx`)
 - **Components**: Descriptive names ending in purpose (`-content.tsx`, `-table.tsx`, `-chart.tsx`)
 - **Dynamic Routes**: Use `[id]` pattern (e.g., `trips/[id]/page.tsx`)
+- **API Routes**: RESTful structure in `app/api/[resource]/route.ts`
 
 ### Component Patterns
 
@@ -59,16 +81,18 @@ components/
 
 ### UI/UX Standards
 
-- **Theme**: Dark mode with slate/blue color scheme (`bg-slate-900`, `text-white`)
+- **Theme**: Dark mode with slate/blue color scheme (`bg-slate-950`, `text-white`)
 - **Cards**: `bg-slate-900 border-slate-800` for main containers
 - **Buttons**: Primary uses `bg-blue-600 hover:bg-blue-700`
 - **Icons**: Lucide React throughout (`Plus`, `Ship`, `Fish`, etc.)
+- **Color System**: Tailwind CSS v4 with custom CSS variables and oklch colors
 
 ### Data Flow Patterns
 
-- **Mock Data**: Most components use mock data arrays (no real API calls yet)
-- **Props Drilling**: Pass data down through component props
+- **Real API Calls**: Components fetch from actual `/api/` endpoints using fetch()
+- **State Management**: React useState for local state, useEffect for data fetching
 - **Type Safety**: Strong TypeScript interfaces for all data structures
+- **Error Handling**: Consistent try/catch blocks with console.error logging
 
 ## Key Features & Components
 
@@ -96,24 +120,25 @@ components/
 ### Commands
 
 \`\`\`bash
-pnpm dev          # Development server
-pnpm build        # Production build
-pnpm lint         # ESLint (ignores during builds)
+pnpm dev # Development server
+pnpm build # Production build
+pnpm lint # ESLint (ignores during builds)
 \`\`\`
 
 ### Database Operations
 
-\`\`\`bash
+```bash
 npx prisma generate    # Generate Prisma client
 npx prisma db push     # Push schema changes
 npx prisma studio      # Database GUI
-\`\`\`
+```
 
 ### Configuration Notes
 
 - **ESLint/TypeScript**: Errors ignored during builds (`ignoreBuildErrors: true`)
 - **Images**: Unoptimized for deployment compatibility
 - **Fonts**: Inter + JetBrains Mono with CSS variables
+- **Database**: Neon serverless PostgreSQL via DATABASE_URL environment variable
 
 ## Important Context
 
@@ -126,9 +151,9 @@ npx prisma studio      # Database GUI
 
 ### External Dependencies
 
-- **Maps**: Styled mock Mapbox implementation (no real API key)
-- **Weather**: Mock weather data for demonstrations
-- **Market Data**: Simulated real-time pricing
+- **Maps**: Real Mapbox implementation with mapbox-gl library
+- **Weather**: Enhanced weather overlays for maritime conditions
+- **Market Data**: Real-time pricing from database with API endpoints
 
 ### Code Quality Notes
 
@@ -142,10 +167,11 @@ npx prisma studio      # Database GUI
 When adding new features:
 
 1. **Create page**: Add to `app/[route]/page.tsx` with MainLayout
-2. **Add navigation**: Update sidebar navigation array
+2. **Add navigation**: Update sidebar navigation array in `components/layout/sidebar.tsx`
 3. **Build components**: Create content component in appropriate domain folder
 4. **Add database models**: Update Prisma schema if needed
-5. **Follow styling**: Use established color/spacing patterns
+5. **Create API routes**: Add RESTful endpoints in `app/api/[resource]/route.ts`
+6. **Follow styling**: Use established color/spacing patterns
 
 When debugging:
 
@@ -153,3 +179,5 @@ When debugging:
 - Verify Tailwind classes are properly applied
 - Ensure TypeScript interfaces match component props
 - Test responsive behavior on different screen sizes
+- Check API endpoint connectivity and error handling
+- Verify database connection and query syntax
