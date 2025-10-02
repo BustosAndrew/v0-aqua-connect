@@ -6,7 +6,6 @@ import { WeatherCard } from "@/components/dashboard/weather-card"
 import { FishingHotspotMap } from "@/components/dashboard/fishing-hotspot-map"
 import { MarketPriceChart } from "@/components/dashboard/market-price-chart"
 import { AIPredictions } from "@/components/dashboard/ai-predictions"
-import Link from "next/link"
 
 export default function HomePage() {
   return (
@@ -14,12 +13,10 @@ export default function HomePage() {
       title="Overview"
       subtitle="Monitor your cooperative's fishing operations and market conditions"
       headerActions={
-        <Link href="/trip-planning">
-          <Button className="bg-blue-600 hover:bg-blue-700">
-            <Plus className="h-4 w-4 mr-2" />
-            Plan a Trip
-          </Button>
-        </Link>
+        <Button className="bg-blue-600 hover:bg-blue-700">
+          <Plus className="h-4 w-4 mr-2" />
+          Plan a Trip
+        </Button>
       }
     >
       <div className="space-y-3">

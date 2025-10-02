@@ -35,21 +35,3 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Failed to fetch catch logs" }, { status: 500 })
   }
 }
-
-export async function POST(request: Request) {
-  try {
-    const body = await request.json()
-    const { date, vessel, species, total_kg, price_per_kg, total_value } = body
-
-    const result = await sql`
-      INSERT INTO catch_logs (date, vessel, species, total_kg, price_per_kg, total_value)
-      VALUES (${date}, ${vessel}, ${species}, ${total_kg}, ${price_per_kg}, ${total_value})
-      RETURNING *
-    `
-
-    return NextResponse.json(result[0])
-  } catch (error) {
-    console.error("[v0] Error creating catch log:", error)
-    return NextResponse.json({ error: "Failed to create catch log" }, { status: 500 })
-  }
-}

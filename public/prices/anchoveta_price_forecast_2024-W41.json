@@ -1,0 +1,13 @@
+[
+  {
+    "species":"Anchoveta",
+    "port":"Callao",
+    "target_week":"2024-W41",
+    "price_pred_pen_perkg":2.315,
+    "direction":"Down",
+    "model_mae_val":0.104,
+    "directional_acc_val":1.0,
+    "lower_1sd":2.283,
+    "upper_1sd":2.347
+  }
+]
