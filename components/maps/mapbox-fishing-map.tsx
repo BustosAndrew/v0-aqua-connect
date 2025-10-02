@@ -50,11 +50,9 @@ export function MapboxFishingMap({
   const [mapImageUrl, setMapImageUrl] = useState("")
   const [selectedHotspot, setSelectedHotspot] = useState<string | null>(null)
   const [isDragging, setIsDragging] = useState(false)
-  const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null)
-  const [pendingCenter, setPendingCenter] = useState<[number, number] | null>(null)
-  const [dragOffset, setDragOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 })
+  const [dragStart, setDragStart] = useState<{ x: number; y: number; center: [number, number] } | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
   const mapRef = useRef<HTMLDivElement>(null)
-  const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   const defaultHotspots: FishingHotspot[] = [
     {
@@ -91,6 +89,7 @@ export function MapboxFishingMap({
 
   useEffect(() => {
     const fetchMapImage = async () => {
+      setIsLoading(true)
       try {
         const response = await fetch(
           `/api/map-image?lng=${center[0]}&lat=${center[1]}&zoom=${zoom}&width=800&height=600`,
@@ -101,6 +100,8 @@ export function MapboxFishingMap({
         }
       } catch (error) {
         console.error("Failed to fetch map image:", error)
+      } finally {
+        setIsLoading(false)
       }
     }
 
@@ -189,8 +190,7 @@ export function MapboxFishingMap({
 
   const handleMouseDown = (e: React.MouseEvent) => {
     setIsDragging(true)
-    setDragStart({ x: e.clientX, y: e.clientY })
-    setDragOffset({ x: 0, y: 0 })
+    setDragStart({ x: e.clientX, y: e.clientY, center: [...center] })
   }
 
   const handleMouseMove = (e: React.MouseEvent) => {
@@ -199,8 +199,6 @@ export function MapboxFishingMap({
     const deltaX = e.clientX - dragStart.x
     const deltaY = e.clientY - dragStart.y
 
-    setDragOffset({ x: deltaX, y: deltaY })
-
     const mapWidth = mapRef.current.offsetWidth
     const mapHeight = mapRef.current.offsetHeight
 
@@ -208,48 +206,21 @@ export function MapboxFishingMap({
     const degreesPerPixelLat = 0.4 / zoom / mapHeight
 
     const newCenter: [number, number] = [
-      center[0] - deltaX * degreesPerPixelLng,
-      center[1] + deltaY * degreesPerPixelLat,
+      dragStart.center[0] - deltaX * degreesPerPixelLng,
+      dragStart.center[1] + deltaY * degreesPerPixelLat,
     ]
 
-    setPendingCenter(newCenter)
-
-    if (updateTimeoutRef.current) {
-      clearTimeout(updateTimeoutRef.current)
-    }
-
-    updateTimeoutRef.current = setTimeout(() => {
-      setCenter(newCenter)
-      setDragStart({ x: e.clientX, y: e.clientY })
-      setDragOffset({ x: 0, y: 0 })
-      setPendingCenter(null)
-    }, 150)
+    setCenter(newCenter)
   }
 
   const handleMouseUp = () => {
-    if (pendingCenter) {
-      setCenter(pendingCenter)
-      setPendingCenter(null)
-    }
     setIsDragging(false)
     setDragStart(null)
-    setDragOffset({ x: 0, y: 0 })
-    if (updateTimeoutRef.current) {
-      clearTimeout(updateTimeoutRef.current)
-    }
   }
 
   const handleMouseLeave = () => {
-    if (pendingCenter) {
-      setCenter(pendingCenter)
-      setPendingCenter(null)
-    }
     setIsDragging(false)
     setDragStart(null)
-    setDragOffset({ x: 0, y: 0 })
-    if (updateTimeoutRef.current) {
-      clearTimeout(updateTimeoutRef.current)
-    }
   }
 
   return (
@@ -262,6 +233,12 @@ export function MapboxFishingMap({
       onMouseLeave={handleMouseLeave}
       style={{ cursor: isDragging ? "grabbing" : "grab" }}
     >
+      {isLoading && (
+        <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="text-white text-sm">Loading map...</div>
+        </div>
+      )}
+
       <div className="absolute top-4 right-4 z-10 flex flex-col gap-2">
         <Button
           size="icon"
@@ -284,10 +261,7 @@ export function MapboxFishingMap({
       <img
         src={mapImageUrl || "/placeholder.svg?height=600&width=800"}
         alt="Fishing map"
-        className="absolute inset-0 w-full h-full object-cover pointer-events-none transition-transform"
-        style={{
-          transform: `translate(${dragOffset.x}px, ${dragOffset.y}px)`,
-        }}
+        className="absolute inset-0 w-full h-full object-cover pointer-events-none"
       />
 
       {activeHotspots.map((hotspot) => {
