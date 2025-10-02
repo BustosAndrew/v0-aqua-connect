@@ -58,39 +58,6 @@ export function EnhancedWeatherOverlay({ weatherPoints, mapBounds }: EnhancedWea
     return baseColors[condition as keyof typeof baseColors] + intensityModifier
   }
 
-  const getDirectionalArrows = (direction: string, intensity = "medium") => {
-    const arrowCount = intensity === "high" ? 4 : intensity === "low" ? 2 : 3
-    const arrowSize = intensity === "high" ? "w-2 h-2" : "w-1.5 h-1.5"
-    const arrowStyle = `absolute ${arrowSize} border-t-2 border-r-2 border-white`
-
-    const directions = {
-      north: "rotate-[-45deg]",
-      northeast: "rotate-[0deg]",
-      east: "rotate-[45deg]",
-      southeast: "rotate-[90deg]",
-      south: "rotate-[135deg]",
-      southwest: "rotate-[180deg]",
-      west: "rotate-[225deg]",
-      northwest: "rotate-[270deg]",
-    }
-
-    const arrows = []
-    for (let i = 0; i < arrowCount; i++) {
-      arrows.push(
-        <div
-          key={i}
-          className={`${arrowStyle} ${directions[direction as keyof typeof directions]}`}
-          style={{
-            top: `${i * 4}px`,
-            left: `${i * 3}px`,
-          }}
-        />,
-      )
-    }
-
-    return <div className="relative w-8 h-8 flex items-center justify-center">{arrows}</div>
-  }
-
   const convertCoordinatesToPixels = (coordinates: [number, number]) => {
     const [lng, lat] = coordinates
     const { north, south, east, west } = mapBounds
@@ -127,9 +94,6 @@ export function EnhancedWeatherOverlay({ weatherPoints, mapBounds }: EnhancedWea
               >
                 {getWeatherIcon(weather.condition, intensity)}
               </div>
-
-              {/* Wind direction arrows - positioned in top-right corner */}
-              <div className="absolute -top-2 -right-2">{getDirectionalArrows(weather.windDirection, intensity)}</div>
 
               {/* Weather details tooltip */}
               <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 bg-slate-900/95 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 hover:opacity-100 transition-opacity pointer-events-auto">
