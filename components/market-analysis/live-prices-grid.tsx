@@ -13,8 +13,8 @@ interface LivePricesGridProps {
 interface PriceData {
   species: string
   port: string
-  price_per_kg: number
-  change_percentage: number
+  price_per_kg: number | string | null | undefined
+  change_percentage: number | string | null | undefined
   recorded_at: string
 }
 
@@ -85,10 +85,15 @@ export function LivePricesGrid({ selectedPort, searchQuery }: LivePricesGridProp
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {displayData.map((species) => {
+        const pricePerKg = Number(species.price_per_kg) || 0
+
         const mockChartData = Array.from({ length: 7 }, (_, i) => ({
-          value: species.price_per_kg * (1 + (Math.random() - 0.5) * 0.1),
+          value: pricePerKg * (1 + (Math.random() - 0.5) * 0.1),
           index: i,
         }))
+
+        const changePercentage = Number(species.change_percentage) || 0
+        const isPositive = changePercentage >= 0
 
         return (
           <Card key={`${species.species}-${species.port}`} className="bg-slate-900 border-slate-800">
@@ -96,23 +101,17 @@ export function LivePricesGrid({ selectedPort, searchQuery }: LivePricesGridProp
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-medium text-white">{species.species}</h3>
-                  <div
-                    className={`flex items-center gap-1 ${species.change_percentage >= 0 ? "text-green-400" : "text-red-400"}`}
-                  >
-                    {species.change_percentage >= 0 ? (
-                      <TrendingUp className="h-4 w-4" />
-                    ) : (
-                      <TrendingDown className="h-4 w-4" />
-                    )}
+                  <div className={`flex items-center gap-1 ${isPositive ? "text-green-400" : "text-red-400"}`}>
+                    {isPositive ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
                     <span className="text-sm">
-                      {species.change_percentage > 0 ? "+" : ""}
-                      {species.change_percentage.toFixed(1)}%
+                      {changePercentage > 0 ? "+" : ""}
+                      {changePercentage.toFixed(1)}%
                     </span>
                   </div>
                 </div>
 
                 <div>
-                  <p className="text-3xl font-bold text-white">S/ {species.price_per_kg.toFixed(2)}</p>
+                  <p className="text-3xl font-bold text-white">S/ {pricePerKg.toFixed(2)}</p>
                   <p className="text-sm text-slate-400">{species.port} • Last 24 Hours</p>
                 </div>
 
@@ -122,7 +121,7 @@ export function LivePricesGrid({ selectedPort, searchQuery }: LivePricesGridProp
                       <Line
                         type="monotone"
                         dataKey="value"
-                        stroke={species.change_percentage >= 0 ? "#10b981" : "#ef4444"}
+                        stroke={isPositive ? "#10b981" : "#ef4444"}
                         strokeWidth={2}
                         dot={false}
                       />
