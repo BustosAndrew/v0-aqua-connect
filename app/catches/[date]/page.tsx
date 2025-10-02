@@ -11,8 +11,20 @@ interface DailyCatchDetailsPageProps {
 }
 
 export default function DailyCatchDetailsPage({ params }: DailyCatchDetailsPageProps) {
-  // Format the date for display
-  const formattedDate = params.date
+  const formatDate = (dateString: string) => {
+    try {
+      const date = new Date(dateString)
+      return date.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })
+    } catch {
+      return dateString
+    }
+  }
+
+  const formattedDate = formatDate(params.date)
 
   return (
     <MainLayout
@@ -27,7 +39,7 @@ export default function DailyCatchDetailsPage({ params }: DailyCatchDetailsPageP
         </Link>
       }
     >
-      <DailyCatchDetailsContent date={formattedDate} />
+      <DailyCatchDetailsContent date={params.date} />
     </MainLayout>
   )
 }

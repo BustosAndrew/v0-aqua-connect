@@ -7,27 +7,34 @@ export async function GET(request: Request, { params }: { params: { date: string
   try {
     const date = params.date
 
+    console.log("[v0] Fetching catch details for date:", date)
+
+    const dateOnly = date.split("T")[0]
+    console.log("[v0] Extracted date only:", dateOnly)
+
     const result = await sql`
       SELECT 
-        ship_name,
-        crew_count,
+        vessel as ship_name,
         species,
-        kg_caught,
+        total_kg as kg_caught,
         price_per_kg,
-        subtotal
-      FROM catch_details
-      WHERE date = ${date}
-      ORDER BY ship_name, species
+        total_value as subtotal
+      FROM catch_logs
+      WHERE DATE(date) = ${dateOnly}
+      ORDER BY vessel, species
     `
 
-    // Group by ship
+    console.log("[v0] Query returned", result.length, "rows")
+    console.log("[v0] Sample data:", result[0])
+
+    // Group by ship (vessel)
     const groupedByShip = result.reduce(
       (acc: any, row: any) => {
         const shipName = row.ship_name
         if (!acc[shipName]) {
           acc[shipName] = {
             shipName,
-            crewCount: row.crew_count,
+            crewCount: 0, // catch_logs doesn't have crew_count, default to 0
             totalIncome: 0,
             catches: [],
           }
@@ -44,7 +51,10 @@ export async function GET(request: Request, { params }: { params: { date: string
       {} as Record<string, any>,
     )
 
-    return NextResponse.json(Object.values(groupedByShip))
+    const finalData = Object.values(groupedByShip)
+    console.log("[v0] Returning", finalData.length, "ships")
+
+    return NextResponse.json(finalData)
   } catch (error) {
     console.error("[v0] Error fetching catch details:", error)
     return NextResponse.json({ error: "Failed to fetch catch details" }, { status: 500 })
