@@ -101,20 +101,46 @@ export function AIPredictions() {
 
         <Card className="bg-slate-800 border-slate-700">
           <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="space-y-2">
-                <p className="text-sm text-slate-400">Price Prediction</p>
-                <p className="text-2xl font-bold text-blue-400">S/ {currentPrice.toFixed(2)}/kg</p>
-                <div className="flex items-center gap-2 text-yellow-400">
-                  <AlertTriangle className="h-3 w-3" />
-                  <span className="text-xs">{currentConfidence}% confidence</span>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="space-y-2">
+                  <p className="text-sm text-slate-400">Price Prediction</p>
+                  <p className="text-2xl font-bold text-blue-400">S/ {currentPrice.toFixed(2)}/kg</p>
+                  <div className="flex items-center gap-2 text-yellow-400">
+                    <AlertTriangle className="h-3 w-3" />
+                    <span className="text-xs">{currentConfidence}% confidence</span>
+                  </div>
                 </div>
               </div>
-              <div className="h-16 w-24">
+              <div className="h-20 w-full">
                 <ChartContainer config={chartConfig} className="h-full w-full">
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={predictionData.slice(0, 4)}>
-                      <Line type="monotone" dataKey="price" stroke="var(--color-price)" strokeWidth={2} dot={false} />
+                    <LineChart data={predictionData} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
+                      <XAxis
+                        dataKey="hour"
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fill: "#64748b", fontSize: 9 }}
+                        interval={1}
+                      />
+                      <YAxis
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fill: "#64748b", fontSize: 9 }}
+                        width={30}
+                        domain={[12, 14]}
+                      />
+                      <ChartTooltip
+                        content={<ChartTooltipContent />}
+                        formatter={(value: number) => [`S/ ${value.toFixed(2)}/kg`, "Price"]}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="price"
+                        stroke="var(--color-price)"
+                        strokeWidth={2}
+                        dot={{ fill: "var(--color-price)", strokeWidth: 1, r: 3 }}
+                      />
                     </LineChart>
                   </ResponsiveContainer>
                 </ChartContainer>

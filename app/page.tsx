@@ -27,9 +27,9 @@ export default function HomePage() {
         <section>
           <h2 className="text-xl font-semibold text-white mb-2">Weather and Ocean Data</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <WeatherCard title="Temperature" value="22°C" icon={<Thermometer className="h-5 w-5" />} />
-            <WeatherCard title="Wave Height" value="1.5m" icon={<Waves className="h-5 w-5" />} />
-            <WeatherCard title="Current Speed" value="0.8 m/s" icon={<Wind className="h-5 w-5" />} />
+            <WeatherCard title="Temperature" value="22°C" icon={<Thermometer className="h-8 w-8" />} />
+            <WeatherCard title="Wave Height" value="1.5m" icon={<Waves className="h-8 w-8" />} />
+            <WeatherCard title="Current Speed" value="0.8 m/s" icon={<Wind className="h-8 w-8" />} />
           </div>
         </section>
 
