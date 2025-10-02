@@ -1,6 +1,8 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import type React from "react"
+
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Plus, Minus, ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react"
 import { EnhancedWeatherOverlay } from "./enhanced-weather-overlay"
@@ -47,6 +49,9 @@ export function MapboxFishingMap({
   const [center, setCenter] = useState<[number, number]>([-81.1, -5.1])
   const [mapImageUrl, setMapImageUrl] = useState("")
   const [selectedHotspot, setSelectedHotspot] = useState<string | null>(null)
+  const [isDragging, setIsDragging] = useState(false)
+  const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null)
+  const mapRef = useRef<HTMLDivElement>(null)
 
   const defaultHotspots: FishingHotspot[] = [
     {
@@ -197,8 +202,50 @@ export function MapboxFishingMap({
     },
   ]
 
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsDragging(true)
+    setDragStart({ x: e.clientX, y: e.clientY })
+  }
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || !dragStart || !mapRef.current) return
+
+    const deltaX = e.clientX - dragStart.x
+    const deltaY = e.clientY - dragStart.y
+
+    // Convert pixel movement to lat/lng based on zoom level
+    const mapWidth = mapRef.current.offsetWidth
+    const mapHeight = mapRef.current.offsetHeight
+
+    // Calculate degrees per pixel based on zoom level
+    const degreesPerPixelLng = 0.4 / zoom / mapWidth
+    const degreesPerPixelLat = 0.4 / zoom / mapHeight
+
+    setCenter((prev) => [prev[0] - deltaX * degreesPerPixelLng, prev[1] + deltaY * degreesPerPixelLat])
+
+    setDragStart({ x: e.clientX, y: e.clientY })
+  }
+
+  const handleMouseUp = () => {
+    setIsDragging(false)
+    setDragStart(null)
+  }
+
+  const handleMouseLeave = () => {
+    setIsDragging(false)
+    setDragStart(null)
+  }
+
   return (
-    <div className={`relative h-96 bg-slate-900 rounded-lg overflow-hidden ${className}`}>
+    <div
+      ref={mapRef}
+      className={`relative h-96 bg-slate-900 rounded-lg overflow-hidden ${className}`}
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseLeave}
+      style={{ cursor: isDragging ? "grabbing" : "grab" }}
+    >
       <div className="absolute top-1/2 left-4 -translate-y-1/2 z-10 flex flex-col gap-1">
         <Button
           size="icon"
@@ -260,7 +307,7 @@ export function MapboxFishingMap({
       <img
         src={mapImageUrl || "/placeholder.svg?height=600&width=800"}
         alt="Fishing map"
-        className="absolute inset-0 w-full h-full object-cover"
+        className="absolute inset-0 w-full h-full object-cover pointer-events-none"
       />
 
       {activeHotspots.map((hotspot) => {
