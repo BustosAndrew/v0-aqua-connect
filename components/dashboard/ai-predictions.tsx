@@ -1,9 +1,10 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Area, AreaChart } from "recharts"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
-import { Brain, TrendingUp, AlertTriangle } from "lucide-react"
+import { Brain, TrendingUp, TrendingDown } from "lucide-react"
 
 const predictionData = [
   { hour: "Now", availability: 75, confidence: 85, price: 12.5 },
@@ -31,9 +32,33 @@ const chartConfig = {
 }
 
 export function AIPredictions() {
+  const [priceForecast, setPriceForecast] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchPriceForecast = async () => {
+      try {
+        const response = await fetch("/api/prices/forecast?species=anchoveta&week=2024-W41")
+        const data = await response.json()
+
+        if (data.forecasts && data.forecasts.length > 0) {
+          setPriceForecast(data.forecasts[0])
+        }
+      } catch (error) {
+        console.error("[v0] Failed to fetch price forecast:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchPriceForecast()
+  }, [])
+
   const currentAvailability = predictionData[0].availability
   const currentConfidence = predictionData[0].confidence
-  const currentPrice = predictionData[0].price
+  const currentPrice = priceForecast ? priceForecast.price_pred_pen_perkg : predictionData[0].price
+  const priceDirection = priceForecast ? priceForecast.direction : "Up"
+  const priceConfidence = priceForecast ? (priceForecast.directional_acc_val * 100).toFixed(0) : currentConfidence
 
   return (
     <div className="space-y-3">
@@ -106,10 +131,21 @@ export function AIPredictions() {
                 <div className="space-y-2">
                   <p className="text-sm text-slate-400">Price Prediction</p>
                   <p className="text-2xl font-bold text-blue-400">S/ {currentPrice.toFixed(2)}/kg</p>
-                  <div className="flex items-center gap-2 text-yellow-400">
-                    <AlertTriangle className="h-3 w-3" />
-                    <span className="text-xs">{currentConfidence}% confidence</span>
+                  <div
+                    className={`flex items-center gap-2 ${priceDirection === "Up" ? "text-green-400" : "text-red-400"}`}
+                  >
+                    {priceDirection === "Up" ? (
+                      <TrendingUp className="h-3 w-3" />
+                    ) : (
+                      <TrendingDown className="h-3 w-3" />
+                    )}
+                    <span className="text-xs">{priceConfidence}% confidence</span>
                   </div>
+                  {priceForecast && (
+                    <p className="text-xs text-slate-500">
+                      {priceForecast.port} • Week {priceForecast.target_week}
+                    </p>
+                  )}
                 </div>
               </div>
               <div className="h-20 w-full">

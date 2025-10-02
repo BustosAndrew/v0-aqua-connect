@@ -13,6 +13,7 @@ interface FishingHotspot {
   coordinates: [number, number]
   type: "high" | "medium" | "low"
   species: string[]
+  probability?: number
 }
 
 interface WeatherData {
@@ -52,7 +53,58 @@ export function MapboxFishingMap({
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState<{ x: number; y: number; center: [number, number] } | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [aiHotspots, setAiHotspots] = useState<FishingHotspot[]>([])
   const mapRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const fetchMapImage = async () => {
+      setIsLoading(true)
+      try {
+        const response = await fetch(
+          `/api/map-image?lng=${center[0]}&lat=${center[1]}&zoom=${zoom}&width=800&height=600`,
+        )
+        const data = await response.json()
+        if (data.url) {
+          setMapImageUrl(data.url)
+        }
+      } catch (error) {
+        console.error("Failed to fetch map image:", error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchMapImage()
+  }, [center, zoom])
+
+  useEffect(() => {
+    const fetchHotspots = async () => {
+      try {
+        const response = await fetch("/api/predictions/hotspots?week=2024-W28")
+        const data = await response.json()
+
+        if (data.data && data.data.features) {
+          // Convert GeoJSON features to hotspot format
+          const hotspots: FishingHotspot[] = data.data.features
+            .filter((feature: any) => feature.properties.p > 0.5) // Only show high probability areas
+            .map((feature: any, index: number) => ({
+              id: `ai-hotspot-${index}`,
+              name: `Hotspot ${index + 1}`,
+              coordinates: feature.geometry.coordinates as [number, number],
+              type: feature.properties.p > 0.8 ? "high" : feature.properties.p > 0.6 ? "medium" : "low",
+              species: ["Anchoveta"], // Default species from the data
+              probability: feature.properties.p,
+            }))
+
+          setAiHotspots(hotspots)
+        }
+      } catch (error) {
+        console.error("[v0] Failed to fetch AI hotspots:", error)
+      }
+    }
+
+    fetchHotspots()
+  }, [])
 
   const defaultHotspots: FishingHotspot[] = [
     {
@@ -85,28 +137,7 @@ export function MapboxFishingMap({
     },
   ]
 
-  const activeHotspots = hotspots.length > 0 ? hotspots : defaultHotspots
-
-  useEffect(() => {
-    const fetchMapImage = async () => {
-      setIsLoading(true)
-      try {
-        const response = await fetch(
-          `/api/map-image?lng=${center[0]}&lat=${center[1]}&zoom=${zoom}&width=800&height=600`,
-        )
-        const data = await response.json()
-        if (data.url) {
-          setMapImageUrl(data.url)
-        }
-      } catch (error) {
-        console.error("Failed to fetch map image:", error)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    fetchMapImage()
-  }, [center, zoom])
+  const activeHotspots = aiHotspots.length > 0 ? aiHotspots : hotspots.length > 0 ? hotspots : defaultHotspots
 
   const handleZoomIn = () => {
     setZoom((prev) => Math.min(prev + 1, 18))
@@ -291,6 +322,9 @@ export function MapboxFishingMap({
                 <div className="font-semibold mb-1">{hotspot.name}</div>
                 <div className="text-slate-300">Species: {hotspot.species.join(", ")}</div>
                 <div className="text-slate-300">Priority: {hotspot.type}</div>
+                {hotspot.probability && (
+                  <div className="text-slate-300">Probability: {(hotspot.probability * 100).toFixed(1)}%</div>
+                )}
               </div>
             )}
           </div>
