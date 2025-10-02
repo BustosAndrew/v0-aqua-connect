@@ -110,6 +110,14 @@ export function MapboxFishingMap({
             }))
 
           console.log("[v0] Loaded AI hotspots:", hotspots.length)
+
+          if (hotspots.length > 0) {
+            const avgLng = hotspots.reduce((sum, h) => sum + h.coordinates[0], 0) / hotspots.length
+            const avgLat = hotspots.reduce((sum, h) => sum + h.coordinates[1], 0) / hotspots.length
+            console.log("[v0] Centering map on hotspots:", [avgLng, avgLat])
+            setCenter([avgLng, avgLat])
+          }
+
           setAiHotspots(hotspots)
         }
       } catch (error) {
@@ -328,17 +336,20 @@ export function MapboxFishingMap({
         return (
           <div
             key={hotspot.id}
-            className="absolute z-20 -translate-x-1/2 -translate-y-1/2"
+            className="absolute z-30 -translate-x-1/2 -translate-y-1/2"
             style={{ left: position.x, top: position.y }}
           >
             <div
-              className={`w-3 h-3 rounded-full border-2 border-white shadow-lg cursor-pointer transition-transform hover:scale-150 ${getHotspotColor(
+              className={`w-5 h-5 rounded-full border-2 border-white shadow-lg cursor-pointer transition-transform hover:scale-150 ${getHotspotColor(
                 hotspot.type,
-              )}`}
+              )} animate-pulse`}
+              style={{
+                boxShadow: "0 0 10px rgba(255, 255, 255, 0.5), 0 0 20px currentColor",
+              }}
               onClick={() => setSelectedHotspot(selectedHotspot === hotspot.id ? null : hotspot.id)}
             />
             {selectedHotspot === hotspot.id && (
-              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-slate-800/95 backdrop-blur-sm rounded-lg p-2 text-white text-xs whitespace-nowrap shadow-xl">
+              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-slate-800/95 backdrop-blur-sm rounded-lg p-2 text-white text-xs whitespace-nowrap shadow-xl z-40">
                 <div className="font-semibold mb-1">{hotspot.name}</div>
                 <div className="text-slate-300">Species: {hotspot.species.join(", ")}</div>
                 <div className="text-slate-300">Priority: {hotspot.type}</div>
@@ -357,15 +368,24 @@ export function MapboxFishingMap({
         <div className="font-semibold mb-2">Fishing Hotspots</div>
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-pink-500 border-2 border-white" />
+            <div
+              className="w-4 h-4 rounded-full bg-pink-500 border-2 border-white shadow-lg"
+              style={{ boxShadow: "0 0 8px rgba(236, 72, 153, 0.6)" }}
+            />
             <span>High Priority</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-green-600 border-2 border-white" />
+            <div
+              className="w-4 h-4 rounded-full bg-green-600 border-2 border-white shadow-lg"
+              style={{ boxShadow: "0 0 8px rgba(22, 163, 74, 0.6)" }}
+            />
             <span>Medium Priority</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-blue-600 border-2 border-white" />
+            <div
+              className="w-4 h-4 rounded-full bg-blue-600 border-2 border-white shadow-lg"
+              style={{ boxShadow: "0 0 8px rgba(37, 99, 235, 0.6)" }}
+            />
             <span>Low Priority</span>
           </div>
         </div>
