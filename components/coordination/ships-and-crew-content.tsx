@@ -10,6 +10,7 @@ interface Ship {
   name: string
   port: string
   crew_count: number
+  image_url?: string
 }
 
 interface CrewMember {
@@ -18,6 +19,7 @@ interface CrewMember {
   ship_name: string
   role: string
   ship_id: number
+  avatar_url?: string
 }
 
 export function ShipsAndCrewContent() {
@@ -46,10 +48,6 @@ export function ShipsAndCrewContent() {
     }
   }
 
-  const getCrewCountForShip = (shipName: string): number => {
-    return crewMembers.filter((member) => member.ship_name === shipName).length
-  }
-
   if (loading) {
     return <div className="text-center text-slate-400 py-8">Loading ships and crew...</div>
   }
@@ -62,7 +60,7 @@ export function ShipsAndCrewContent() {
           <CardTitle className="text-white text-xl">Ships</CardTitle>
         </CardHeader>
         <CardContent>
-          <ShipsTable ships={ships} setShips={setShips} getCrewCountForShip={getCrewCountForShip} />
+          <ShipsTable ships={ships} refreshData={fetchData} />
         </CardContent>
       </Card>
 
@@ -72,7 +70,7 @@ export function ShipsAndCrewContent() {
           <CardTitle className="text-white text-xl">Crew Members</CardTitle>
         </CardHeader>
         <CardContent>
-          <CrewMembersTable crewMembers={crewMembers} setCrewMembers={setCrewMembers} ships={ships} />
+          <CrewMembersTable crewMembers={crewMembers} ships={ships} refreshData={fetchData} />
         </CardContent>
       </Card>
     </div>

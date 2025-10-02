@@ -10,8 +10,9 @@ import { toast } from "@/hooks/use-toast"
 interface CrewMember {
   id: number
   name: string
-  ship: string
+  ship_name: string
   role: string
+  ship_id: number
 }
 
 interface Ship {
@@ -33,7 +34,7 @@ const availableRoles = ["Captain", "Engineer", "Navigator", "Deckhand", "Cook", 
 export function EditCrewMemberDialog({ open, onOpenChange, crewMember, onSave, ships }: EditCrewMemberDialogProps) {
   const [formData, setFormData] = useState({
     name: crewMember.name,
-    ship: crewMember.ship,
+    ship_id: crewMember.ship_id,
     role: crewMember.role,
   })
 
@@ -47,7 +48,7 @@ export function EditCrewMemberDialog({ open, onOpenChange, crewMember, onSave, s
       return
     }
 
-    if (!formData.ship) {
+    if (!formData.ship_id) {
       toast({
         title: "Error",
         description: "Ship assignment is required",
@@ -68,17 +69,13 @@ export function EditCrewMemberDialog({ open, onOpenChange, crewMember, onSave, s
     const updatedCrewMember: CrewMember = {
       ...crewMember,
       name: formData.name.trim(),
-      ship: formData.ship,
+      ship_id: formData.ship_id,
       role: formData.role,
+      ship_name: ships.find((s) => s.id === formData.ship_id)?.name || "",
     }
 
     onSave(updatedCrewMember)
     onOpenChange(false)
-
-    toast({
-      title: "Success",
-      description: "Crew member updated successfully",
-    })
   }
 
   return (
@@ -101,13 +98,16 @@ export function EditCrewMemberDialog({ open, onOpenChange, crewMember, onSave, s
 
           <div>
             <label className="text-sm font-medium text-white mb-2 block">Assigned Ship</label>
-            <Select value={formData.ship} onValueChange={(value) => setFormData({ ...formData, ship: value })}>
+            <Select
+              value={formData.ship_id.toString()}
+              onValueChange={(value) => setFormData({ ...formData, ship_id: Number.parseInt(value) })}
+            >
               <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="bg-slate-800 border-slate-700">
                 {ships.map((ship) => (
-                  <SelectItem key={ship.id} value={ship.name} className="text-white hover:bg-slate-700">
+                  <SelectItem key={ship.id} value={ship.id.toString()} className="text-white hover:bg-slate-700">
                     {ship.name}
                   </SelectItem>
                 ))}
