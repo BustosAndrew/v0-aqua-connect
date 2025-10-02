@@ -4,7 +4,7 @@ import type React from "react"
 
 import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
-import { Plus, Minus, ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react"
+import { Plus, Minus } from "lucide-react"
 import { EnhancedWeatherOverlay } from "./enhanced-weather-overlay"
 
 interface FishingHotspot {
@@ -51,7 +51,10 @@ export function MapboxFishingMap({
   const [selectedHotspot, setSelectedHotspot] = useState<string | null>(null)
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null)
+  const [pendingCenter, setPendingCenter] = useState<[number, number] | null>(null)
+  const [dragOffset, setDragOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 })
   const mapRef = useRef<HTMLDivElement>(null)
+  const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   const defaultHotspots: FishingHotspot[] = [
     {
@@ -103,24 +106,6 @@ export function MapboxFishingMap({
 
     fetchMapImage()
   }, [center, zoom])
-
-  const handlePan = (direction: "up" | "down" | "left" | "right") => {
-    const panAmount = 0.05 / zoom // Smaller pan at higher zoom levels
-    setCenter((prev) => {
-      switch (direction) {
-        case "up":
-          return [prev[0], prev[1] + panAmount]
-        case "down":
-          return [prev[0], prev[1] - panAmount]
-        case "left":
-          return [prev[0] - panAmount, prev[1]]
-        case "right":
-          return [prev[0] + panAmount, prev[1]]
-        default:
-          return prev
-      }
-    })
-  }
 
   const handleZoomIn = () => {
     setZoom((prev) => Math.min(prev + 1, 18))
@@ -205,6 +190,7 @@ export function MapboxFishingMap({
   const handleMouseDown = (e: React.MouseEvent) => {
     setIsDragging(true)
     setDragStart({ x: e.clientX, y: e.clientY })
+    setDragOffset({ x: 0, y: 0 })
   }
 
   const handleMouseMove = (e: React.MouseEvent) => {
@@ -213,27 +199,57 @@ export function MapboxFishingMap({
     const deltaX = e.clientX - dragStart.x
     const deltaY = e.clientY - dragStart.y
 
-    // Convert pixel movement to lat/lng based on zoom level
+    setDragOffset({ x: deltaX, y: deltaY })
+
     const mapWidth = mapRef.current.offsetWidth
     const mapHeight = mapRef.current.offsetHeight
 
-    // Calculate degrees per pixel based on zoom level
     const degreesPerPixelLng = 0.4 / zoom / mapWidth
     const degreesPerPixelLat = 0.4 / zoom / mapHeight
 
-    setCenter((prev) => [prev[0] - deltaX * degreesPerPixelLng, prev[1] + deltaY * degreesPerPixelLat])
+    const newCenter: [number, number] = [
+      center[0] - deltaX * degreesPerPixelLng,
+      center[1] + deltaY * degreesPerPixelLat,
+    ]
 
-    setDragStart({ x: e.clientX, y: e.clientY })
+    setPendingCenter(newCenter)
+
+    if (updateTimeoutRef.current) {
+      clearTimeout(updateTimeoutRef.current)
+    }
+
+    updateTimeoutRef.current = setTimeout(() => {
+      setCenter(newCenter)
+      setDragStart({ x: e.clientX, y: e.clientY })
+      setDragOffset({ x: 0, y: 0 })
+      setPendingCenter(null)
+    }, 150)
   }
 
   const handleMouseUp = () => {
+    if (pendingCenter) {
+      setCenter(pendingCenter)
+      setPendingCenter(null)
+    }
     setIsDragging(false)
     setDragStart(null)
+    setDragOffset({ x: 0, y: 0 })
+    if (updateTimeoutRef.current) {
+      clearTimeout(updateTimeoutRef.current)
+    }
   }
 
   const handleMouseLeave = () => {
+    if (pendingCenter) {
+      setCenter(pendingCenter)
+      setPendingCenter(null)
+    }
     setIsDragging(false)
     setDragStart(null)
+    setDragOffset({ x: 0, y: 0 })
+    if (updateTimeoutRef.current) {
+      clearTimeout(updateTimeoutRef.current)
+    }
   }
 
   return (
@@ -246,44 +262,6 @@ export function MapboxFishingMap({
       onMouseLeave={handleMouseLeave}
       style={{ cursor: isDragging ? "grabbing" : "grab" }}
     >
-      <div className="absolute top-1/2 left-4 -translate-y-1/2 z-10 flex flex-col gap-1">
-        <Button
-          size="icon"
-          variant="outline"
-          className="bg-slate-800/90 border-slate-700 text-white backdrop-blur-sm hover:bg-slate-700 h-8 w-8"
-          onClick={() => handlePan("up")}
-        >
-          <ChevronUp className="h-4 w-4" />
-        </Button>
-        <div className="flex gap-1">
-          <Button
-            size="icon"
-            variant="outline"
-            className="bg-slate-800/90 border-slate-700 text-white backdrop-blur-sm hover:bg-slate-700 h-8 w-8"
-            onClick={() => handlePan("left")}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <Button
-            size="icon"
-            variant="outline"
-            className="bg-slate-800/90 border-slate-700 text-white backdrop-blur-sm hover:bg-slate-700 h-8 w-8"
-            onClick={() => handlePan("right")}
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-        <Button
-          size="icon"
-          variant="outline"
-          className="bg-slate-800/90 border-slate-700 text-white backdrop-blur-sm hover:bg-slate-700 h-8 w-8"
-          onClick={() => handlePan("down")}
-        >
-          <ChevronDown className="h-4 w-4" />
-        </Button>
-      </div>
-
-      {/* Zoom Controls */}
       <div className="absolute top-4 right-4 z-10 flex flex-col gap-2">
         <Button
           size="icon"
@@ -303,11 +281,13 @@ export function MapboxFishingMap({
         </Button>
       </div>
 
-      {/* Map Image - always render with fallback */}
       <img
         src={mapImageUrl || "/placeholder.svg?height=600&width=800"}
         alt="Fishing map"
-        className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+        className="absolute inset-0 w-full h-full object-cover pointer-events-none transition-transform"
+        style={{
+          transform: `translate(${dragOffset.x}px, ${dragOffset.y}px)`,
+        }}
       />
 
       {activeHotspots.map((hotspot) => {
@@ -343,10 +323,8 @@ export function MapboxFishingMap({
         )
       })}
 
-      {/* Enhanced Weather Overlay */}
       {showWeather && <EnhancedWeatherOverlay weatherPoints={enhancedWeather} mapBounds={mapBounds} />}
 
-      {/* Legend */}
       <div className="absolute bottom-4 left-4 bg-slate-800/90 backdrop-blur-sm rounded-lg p-3 text-white text-xs z-10">
         <div className="font-semibold mb-2">Fishing Hotspots</div>
         <div className="flex flex-col gap-1">
