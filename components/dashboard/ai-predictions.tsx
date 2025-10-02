@@ -102,12 +102,18 @@ export function AIPredictions() {
             12-Hour AI Predictions
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <ChartContainer config={chartConfig} className="h-[200px]">
+        <CardContent className="pr-2">
+          <ChartContainer config={chartConfig} className="h-[200px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={predictionData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                <XAxis dataKey="hour" axisLine={false} tickLine={false} tick={{ fill: "#94a3b8", fontSize: 10 }} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fill: "#94a3b8", fontSize: 10 }} />
+              <LineChart data={predictionData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+                <XAxis
+                  dataKey="hour"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: "#94a3b8", fontSize: 10 }}
+                  interval={0}
+                />
+                <YAxis axisLine={false} tickLine={false} tick={{ fill: "#94a3b8", fontSize: 10 }} width={30} />
                 <ChartTooltip
                   content={<ChartTooltipContent />}
                   formatter={(value: number, name: string) => {
